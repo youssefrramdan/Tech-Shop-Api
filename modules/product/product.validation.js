@@ -13,7 +13,7 @@ const productValidation = Joi.object({
     destination: Joi.string().required(),
     filename: Joi.string().required(),
     path: Joi.string().required(),
-  }).required(),
+  }),
   images: Joi.array().items(
     Joi.object({
       fieldname: Joi.string().required(),

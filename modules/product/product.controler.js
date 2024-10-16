@@ -6,12 +6,14 @@ import { deleteOne } from "../handlers/handlers.js";
 
 const addProduct = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });
-  req.body.imageCover = req.files.imageCover[0].filename;
-  req.body.images = req.files.images.map((img) => img.filename);
+  const { imageCover, images } = req.body; 
   let product = new Product(req.body);
+  product.imageCover = imageCover; 
+  product.images = images;
   await product.save();
   res.json({ message: "success", product });
 });
+
 
 const getAllProducts = catchError(async (req, res, next) => {
   let products = await Product.find()

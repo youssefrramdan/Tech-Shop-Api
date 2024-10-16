@@ -7,7 +7,7 @@ import { AppError } from "../../utils/appError.js";
 const addBrand = catchError(async (req, res, next) => {
   // تحقق مما إذا كان الملف موجودًا
   if (!req.file) {
-    return next(new AppError('Logo is required', 400)); // قم بإرجاع خطأ إذا لم يتم رفع اللوغو
+    return next(new AppError("Logo is required", 400)); // قم بإرجاع خطأ إذا لم يتم رفع اللوغو
   }
 
   req.body.slug = slugify(req.body.name, { lower: true });
@@ -20,7 +20,7 @@ const addBrand = catchError(async (req, res, next) => {
 });
 
 const getAllBrands = catchError(async (req, res, next) => {
-  let brands = await Brand.find(); 
+  let brands = await Brand.find();
   res.json({ message: "success", brands });
 });
 
@@ -34,23 +34,27 @@ const getSpecificBrand = catchError(async (req, res, next) => {
 
 // تحديث علامة تجارية
 const updateBrand = catchError(async (req, res, next) => {
-  req.body.slug = slugify(req.body.name, { lower: true }); 
-  let brand = await Brand.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  
+  req.body.slug = slugify(req.body.name, { lower: true });
+  if (req.body.logo) {
+    req.body.logo = req.body.logo;
+  }
+  let brand = await Brand.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
   if (!brand) {
     return next(new AppError("Brand not found", 404));
   }
-  
+
   res.json({ message: "success", brand });
 });
 
 const deleteBrand = catchError(async (req, res, next) => {
   let brand = await Brand.findByIdAndDelete(req.params.id);
-  
+
   if (!brand) {
     return next(new AppError("Brand not found", 404));
   }
-  
+
   res.json({ message: "Brand deleted successfully", brand });
 });
 

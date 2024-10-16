@@ -12,7 +12,7 @@ const brandValidation = Joi.object({
     destination: Joi.string().required(),
     filename: Joi.string().required(),
     path: Joi.string().required(),
-  }).optional(), // logo is optional
+  }).optional(), 
 });
 
 export { brandValidation };

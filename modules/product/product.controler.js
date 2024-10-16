@@ -6,8 +6,10 @@ import { deleteOne } from "../handlers/handlers.js";
 
 const addProduct = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });
-  req.body.imageCover = req.files.imageCover[0].filename;
-  req.body.images = req.files.images.map((img) => img.filename);
+  if (req.files.imageCover) {
+    req.body.imageCover = req.files.imageCover[0].filename;
+    req.body.images = req.files.images.map((img) => img.filename);
+  }
   let product = new Product(req.body);
   await product.save();
   res.json({ message: "success", product });
@@ -73,7 +75,7 @@ const pagination = catchError(async (req, res, next) => {
   // احسب العدد الإجمالي للصفحات
   const totalPages = Math.ceil(totalProducts / limit);
 
-  // تحقق مما إذا كانت رقم الصفحة أكبر من العدد الإجمالي للصفحات
+  // تحقق مما إذا كانت رقم الصفحة أكبر من العدد  الإجمالي للصفحات
   if (pageNumber > totalPages && totalPages > 0) {
     return res.status(400).json({
       message: "Invalid page number",

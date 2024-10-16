@@ -5,7 +5,9 @@ import { AppError } from "../../utils/appError.js";
 import { deleteOne, updateOne } from "../handlers/handlers.js";
 const addBrand = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });
-  req.body.logo = req.file.filename;
+  if (req.file.filename) {
+    req.body.logo = req.file.filename;
+  }
   let brand = new Brand(req.body);
   await brand.save();
   res.json({ message: "success", brand });

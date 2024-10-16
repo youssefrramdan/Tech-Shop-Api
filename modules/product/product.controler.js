@@ -14,7 +14,16 @@ const addProduct = catchError(async (req, res, next) => {
 });
 
 const getAllProducts = catchError(async (req, res, next) => {
-  let products = await Product.find();
+  let products = await Product.find()
+  .populate({
+    path: 'category',
+    select: 'name'  
+  })
+  .populate({
+    path: 'subcategory',
+    select: 'name' 
+  });
+
   res.json({ message: "success", products });
 });
 

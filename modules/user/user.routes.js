@@ -7,7 +7,7 @@ import {
   updateUser,
 } from "./user.controller.js";
 import { protectedRoutes } from "../../auth/auth.controller.js";
-
+import { checkEmail } from "../../middlewares/checkEmail.js";
 const userRouter = Router();
 userRouter.route("/").post(checkEmail,addUser).get(getAllUsers);
 userRouter

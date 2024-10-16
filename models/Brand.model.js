@@ -22,9 +22,12 @@ const schema = mongoose.Schema(
     versionKey: false,
   }
 );
+
+// Update the logo to include the full URL
 schema.post("init", function (doc) {
   if (doc.logo) {
-    doc.logo = process.env.BASE_URL+"brands/" + doc.logo;
+    doc.logo = `https://res.cloudinary.com/dthsq3uel/image/upload/${doc.logo}`
   }
 });
+
 export const Brand = mongoose.model("Brand", schema);

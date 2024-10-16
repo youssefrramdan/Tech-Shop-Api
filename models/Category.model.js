@@ -30,7 +30,7 @@ const schema = mongoose.Schema(
 // Middleware to set the image URL after fetching the document
 schema.post("init", function (doc) {
   if (doc.image) {
-    doc.image = "process.env.BASE_URL"+"categories/" + doc.image;
+    doc.image = `https://res.cloudinary.com/dthsq3uel/image/upload/categories/${doc.image}`;
   }
 });
 

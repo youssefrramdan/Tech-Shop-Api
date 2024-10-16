@@ -89,9 +89,6 @@ const removeItemFromCart = catchError(async (req, res, next) => {
 
 const getLoggedUser = catchError(async (req, res, next) => {
   const cart = await Cart.findOne({user : req.user._id})
-  console.log("cart");
-  
-
   if (!cart) return next(new AppError('Cart not found', 404));
 
   return res.json({ message: "Item removed successfully", cart });

@@ -16,11 +16,14 @@ const schema = mongoose.Schema(
       default: "user",
     },
     passwordChangedAt: Date,
-    wishlist: [{
-      product:{
-        type: mongoose.Types.ObjectId, ref: "Product" 
-      }
-    }],
+    wishlist: [
+      {
+        product: {
+          type: mongoose.Types.ObjectId,
+          ref: "Product",
+        },
+      },
+    ],
     addresses: [
       {
         city: String,
@@ -28,19 +31,26 @@ const schema = mongoose.Schema(
         street: String,
       },
     ],
+    cart: {
+      type: mongoose.Types.ObjectId,
+      ref: "Cart",
+    },
   },
-
   {
     timestamps: true,
     versionKey: false,
   }
 );
+
 schema.pre("save", function () {
   this.password = bcrypt.hashSync(this.password, 8);
 });
 
 schema.pre("findOneAndUpdate", function () {
-  this.password = bcrypt.hashSync(this.password, 8);
+  const update = this.getUpdate();
+  if (update.password) {
+    update.password = bcrypt.hashSync(update.password, 8);
+  }
 });
 
 export const User = mongoose.model("User", schema);

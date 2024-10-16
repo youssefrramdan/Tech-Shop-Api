@@ -9,7 +9,7 @@ import {
 import { protectedRoutes } from "../../auth/auth.controller.js";
 
 const userRouter = Router();
-userRouter.route("/").post(addUser).get(getAllUsers);
+userRouter.route("/").post(checkEmail,addUser).get(getAllUsers);
 userRouter
   .route("/:id")
   .get(protectedRoutes,getSpecificUser)

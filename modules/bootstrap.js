@@ -1,4 +1,5 @@
 import authRouter from "../auth/auth.routes.js";
+import { orderRouter } from "../order/order.routes.js";
 import brandRouter from "./brand/brand.routes.js";
 import { cartRouter } from "./cart/cart.routes.js";
 import categoryRouter from "./category/category.routes.js";
@@ -16,4 +17,5 @@ export const bootstrap = (app) => {
   app.use("/api/auth/", authRouter);
   app.use("/api/coupons" ,couponRouter)
   app.use("/api/carts" ,cartRouter)
+  app.use("/api/orders" ,orderRouter)
 };

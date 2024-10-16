@@ -56,24 +56,18 @@ const updateProduct = catchError(async (req, res, next) => {
 const deleteProduct = deleteOne(Product);
 
 const pagination = catchError(async (req, res, next) => {
-  // استخراج رقم الصفحة من الاستعلام وتعيين قيم افتراضية إذا لزم الأمر
   const pageNumber = req.query.page
     ? parseInt(req.query.page) < 1
       ? 1
       : parseInt(req.query.page)
     : 1;
 
-  // استخراج الحد الأقصى من الاستعلام وتعيين قيم افتراضية
-  const limit = req.query.limit ? Math.min(parseInt(req.query.limit), 100) : 5; // Allow custom limit with a maximum of 100
+  const limit = req.query.limit ? Math.min(parseInt(req.query.limit), 100) : 5;
   const skip = (pageNumber - 1) * limit;
 
-  // احسب العدد الإجمالي للمنتجات
   const totalProducts = await Product.countDocuments();
-
-  // احسب العدد الإجمالي للصفحات
   const totalPages = Math.ceil(totalProducts / limit);
 
-  // تحقق مما إذا كانت رقم الصفحة أكبر من العدد  الإجمالي للصفحات
   if (pageNumber > totalPages && totalPages > 0) {
     return res.status(400).json({
       message: "Invalid page number",

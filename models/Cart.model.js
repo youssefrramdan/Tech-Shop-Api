@@ -12,7 +12,7 @@ const schema = new Schema(
     ],
     totalCartPrice: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
-    totalCartAfterPrice: { type: Number, default: 0 },
+    totalCartPriceAfterDiscount: { type: Number, default: 0 },
   },
   { timestamps: true, versionKey: false }
 );

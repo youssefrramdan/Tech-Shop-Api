@@ -1,5 +1,6 @@
 import { catchError } from "../../middlewares/catchError.js";
 import { Cart } from "../../models/Cart.model.js";
+import { Coupon } from "../../models/Coupon.model.js";
 import { Product } from "../../models/Product.model.js";
 import { AppError } from "../../utils/appError.js";
 
@@ -101,7 +102,26 @@ const clearUserCart = catchError(async (req, res, next) => {
   return res.json({ message: "cart removed successfully"});
 });
 
+const applyCoupon = catchError(async (req, res, next) => {
+  let coupon = await Coupon.findOne({ code: req.body.code, expires: { $gte: Date.now() } });
+  if (!coupon) return next(new AppError('Opps coupon invalid', 404));
+
+  let cart = await Cart.findOne({ user: req.user._id });
+  if (!cart) return next(new AppError('Cart not found', 404));
+
+  cart.totalCartPriceAfterDiscount = 
+    cart.totalCartPrice - (cart.totalCartPrice * coupon.discount) / 100;
+  
+  if (cart.totalCartPriceAfterDiscount < 0) cart.totalCartPriceAfterDiscount = 0;
+
+  cart.discount = coupon.discount;
+  await cart.save();
+
+  await Coupon.findByIdAndDelete(coupon._id);
+
+  res.json({ message: "success", cart });
+});
 
 
 
-export { addToCart ,updateProductQuantity , removeItemFromCart ,getLoggedUser,clearUserCart};
+export { addToCart ,updateProductQuantity , removeItemFromCart ,getLoggedUser,clearUserCart , applyCoupon};

@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import dotenv from "dotenv";
-dotenv.config()
+dotenv.config();
 const schema = mongoose.Schema(
   {
     name: {
@@ -37,6 +37,7 @@ const schema = mongoose.Schema(
       required: true,
       min: 0,
     },
+    sold: { type: Number, default: 0 },
     discount: {
       type: Number,
       min: 0,

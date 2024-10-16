@@ -6,6 +6,7 @@ import {
   deleteBrand,
   updateBrand,
 } from "../brand/brand.controller.js";
+import { uploadSingleFile } from "../../fileUpload/fileUpload.js";
 import { protectedRoutes } from "../../auth/auth.controller.js";
 
 const brandRouter = Router();
@@ -17,6 +18,6 @@ brandRouter
   .route("/:id")
   .get(getSpecificBrand)
   .put(protectedRoutes, updateBrand)
-  .delete(protectedRoutes, deleteBrand);
+  .delete(protectedRoutes ,deleteBrand);
 
 export default brandRouter;

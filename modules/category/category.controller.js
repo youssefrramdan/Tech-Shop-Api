@@ -7,6 +7,8 @@ import { deleteOne, updateOne } from "../handlers/handlers.js";
 const addCategory = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });
   // req.body.image = req.file.filename;
+  console.log("test");
+  
   let category = new Category(req.body);
   await category.save();
   res.json({ message: "success", category });

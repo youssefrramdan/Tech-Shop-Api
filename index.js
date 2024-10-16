@@ -6,7 +6,7 @@ import { AppError } from "./utils/appError.js";
 import dotenv from "dotenv";
 dotenv.config({path :"./config.env"});
 const app = express();
-
+app.use(cors());
 app.use("/uploads", express.static("./uploads"));
 dotenv.config({path:'config.env'})
 app.use(express.json());

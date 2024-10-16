@@ -64,17 +64,12 @@ const schema = mongoose.Schema(
     versionKey: false,
   }
 );
-schema.post("init", function (doc) {
-  if (doc.imageCover) {
-    doc.imageCover = `https://res.cloudinary.com/dthsq3uel/image/upload/products/${doc.imageCover}`;
-  }
 
-  if (Array.isArray(doc.images)) {
-    doc.images = doc.images.map(
-      (img) =>
-        `https://res.cloudinary.com/dthsq3uel/image/upload/products/${img}`
-    );
-  }
+schema.post("init", function (doc) {
+  doc.imageCover = process.env.BASE_URL + "products/" + doc.imageCover;
+  doc.images = doc.images.map(
+    (img) => process.env.BASE_URL + "products/" + img
+  );
 });
 
 export const Product = mongoose.model("Product", schema);

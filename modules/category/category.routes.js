@@ -27,7 +27,7 @@ categoryRouter
 categoryRouter
   .route("/:id")
   .get(getSpecificCategory)
-  .put(protectedRoutes, uploadSingleFile("image", "categories"), updateCategory)
+  .put(protectedRoutes, updateCategory)
   .delete(protectedRoutes, deleteCategory);
 
 export default categoryRouter;

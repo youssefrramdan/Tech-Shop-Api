@@ -65,11 +65,5 @@ const schema = mongoose.Schema(
   }
 );
 
-schema.post("init", function (doc) {
-  doc.imageCover = process.env.BASE_URL + "products/" + doc.imageCover;
-  doc.images = doc.images.map(
-    (img) => process.env.BASE_URL + "products/" + img
-  );
-});
 
 export const Product = mongoose.model("Product", schema);

@@ -22,9 +22,5 @@ const schema = mongoose.Schema(
     versionKey: false,
   }
 );
-schema.post("init", function (doc) {
-  if (doc.logo) {
-    doc.logo = process.env.BASE_URL+"brands/" + doc.logo;
-  }
-});
+
 export const Brand = mongoose.model("Brand", schema);

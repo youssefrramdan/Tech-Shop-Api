@@ -4,75 +4,86 @@ import slugify from "slugify";
 import { AppError } from "../../utils/appError.js";
 import { deleteOne } from "../handlers/handlers.js";
 
+import { cloudinaryUploadImage } from "../../fileUpload/fileUpload.js"; // تأكد من استيراد الدالة
+
 const addProduct = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });
-  const { imageCover, images } = req.body; 
-  let product = new Product(req.body);
-  product.imageCover = imageCover; 
-  product.images = images;
+
+  // رفع الصورة الرئيسية
+  if (req.files.imageCover) {
+    const imageCoverUpload = await cloudinaryUploadImage(req.files.imageCover[0].buffer); // استخدم buffer
+    req.body.imageCover = imageCoverUpload.secure_url; // الحصول على الرابط
+  }
+
+  // رفع الصور الأخرى
+  if (req.files.images) {
+    req.body.images = [];
+    for (const img of req.files.images) {
+      const uploadedImage = await cloudinaryUploadImage(img.buffer); // رفع كل صورة
+      req.body.images.push(uploadedImage.secure_url); // إضافة الرابط
+    }
+  }
+
+  const product = new Product(req.body);
   await product.save();
+
   res.json({ message: "success", product });
 });
 
 
 const getAllProducts = catchError(async (req, res, next) => {
-  let products = await Product.find()
-  .populate({
-    path: 'category',
-    select: 'name'  
-  })
-  .populate({
-    path: 'subcategory',
-    select: 'name' 
-  });
+  const products = await Product.find()
+    .populate({ path: 'category', select: 'name' })
+    .populate({ path: 'subcategory', select: 'name' });
 
   res.json({ message: "success", products });
 });
 
 const getSpecificProduct = catchError(async (req, res, next) => {
-  let product = await Product.findById(req.params.id);
-  product || next(new AppError("product not found"), 404);
-  !product || res.json({ message: "success", product });
-});
-
-const updateProduct = catchError(async (req, res, next) => {
-  if (!req.body.name) {
-    return next(new AppError("Product name is required", 400));
+  const product = await Product.findById(req.params.id);
+  
+  if (!product) {
+    return next(new AppError("Product not found", 404));
   }
+  
+  res.json({ message: "success", product });
+});
+const updateProduct = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });
+
   const product = await Product.findById(req.params.id);
   if (!product) {
     return next(new AppError("Product not found", 404));
   }
+
+  // تحديث الصورة الرئيسية
   if (req.files?.imageCover) {
-    req.body.imageCover = req.files.imageCover[0].filename;
+    const imageCoverUpload = await cloudinaryUploadImage(req.files.imageCover[0].buffer);
+    req.body.imageCover = imageCoverUpload.secure_url; // الحصول على الرابط
   }
+
+  // تحديث الصور الأخرى
   if (req.files?.images) {
-    req.body.images = req.files.images.map((img) => img.filename);
+    req.body.images = [];
+    for (const img of req.files.images) {
+      const uploadedImage = await cloudinaryUploadImage(img.buffer);
+      req.body.images.push(uploadedImage.secure_url); // إضافة الرابط
+    }
   }
+
   const updatedProduct = await Product.findByIdAndUpdate(
     req.params.id,
     req.body,
-    {
-      new: true,
-      runValidators: true,
-    }
+    { new: true, runValidators: true }
   );
-  res.json({
-    message: "Product updated successfully",
-    product: updatedProduct,
-  });
+
+  res.json({ message: "Product updated successfully", product: updatedProduct });
 });
 
 const deleteProduct = deleteOne(Product);
 
 const pagination = catchError(async (req, res, next) => {
-  const pageNumber = req.query.page
-    ? parseInt(req.query.page) < 1
-      ? 1
-      : parseInt(req.query.page)
-    : 1;
-
+  const pageNumber = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
   const limit = req.query.limit ? Math.min(parseInt(req.query.limit), 100) : 5;
   const skip = (pageNumber - 1) * limit;
 

@@ -6,18 +6,21 @@ import {
   deleteBrand,
   updateBrand,
 } from "../brand/brand.controller.js";
-import { uploadSingleFile } from "../../fileUpload/fileUpload.js";
-import { protectedRoutes } from "../../auth/auth.controller.js";
+import { protectedRoutes } from "../../auth/auth.controller.js"; 
+import { uploadSingleImage } from "../../middlewares/uploadImages.js";
 
 const brandRouter = Router();
+
+// مسارات العلامات التجارية
 brandRouter
-  .route("/")
-  .get(getAllBrands)
-  .post(protectedRoutes, addBrand)
+  .route("/") // المسار الجذري
+  .get(getAllBrands) // جلب جميع العلامات التجارية
+  .post(protectedRoutes, uploadSingleImage('logo'), addBrand); // إضافة علامة تجاري
+
 brandRouter
-  .route("/:id")
-  .get(getSpecificBrand)
-  .put(protectedRoutes, updateBrand)
-  .delete(protectedRoutes ,deleteBrand);
+  .route("/:id") // المسار الخاص بعلامة تجارية معينة
+  .get(getSpecificBrand) // جلب علامة تجارية محددة
+  .put(protectedRoutes, uploadSingleImage('logo'), updateBrand) // تحديث علامة تجارية
+  .delete(protectedRoutes, deleteBrand); // حذف علامة تجارية
 
 export default brandRouter;

@@ -4,23 +4,21 @@ import slugify from "slugify";
 import { AppError } from "../../utils/appError.js";
 import { deleteOne } from "../handlers/handlers.js";
 
-import { cloudinaryUploadImage } from "../../fileUpload/fileUpload.js"; // تأكد من استيراد الدالة
+import { cloudinaryUploadImage } from "../../fileUpload/fileUpload.js"; 
 
 const addProduct = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });
 
-  // رفع الصورة الرئيسية
   if (req.files.imageCover) {
-    const imageCoverUpload = await cloudinaryUploadImage(req.files.imageCover[0].buffer); // استخدم buffer
-    req.body.imageCover = imageCoverUpload.secure_url; // الحصول على الرابط
+    const imageCoverUpload = await cloudinaryUploadImage(req.files.imageCover[0].buffer); 
+    req.body.imageCover = imageCoverUpload.secure_url; 
   }
 
-  // رفع الصور الأخرى
-  if (req.files.images) {
+ if (req.files.images) {
     req.body.images = [];
     for (const img of req.files.images) {
-      const uploadedImage = await cloudinaryUploadImage(img.buffer); // رفع كل صورة
-      req.body.images.push(uploadedImage.secure_url); // إضافة الرابط
+      const uploadedImage = await cloudinaryUploadImage(img.buffer); 
+      req.body.images.push(uploadedImage.secure_url); 
     }
   }
 
@@ -56,18 +54,16 @@ const updateProduct = catchError(async (req, res, next) => {
     return next(new AppError("Product not found", 404));
   }
 
-  // تحديث الصورة الرئيسية
   if (req.files?.imageCover) {
     const imageCoverUpload = await cloudinaryUploadImage(req.files.imageCover[0].buffer);
-    req.body.imageCover = imageCoverUpload.secure_url; // الحصول على الرابط
+    req.body.imageCover = imageCoverUpload.secure_url; 
   }
 
-  // تحديث الصور الأخرى
   if (req.files?.images) {
     req.body.images = [];
     for (const img of req.files.images) {
       const uploadedImage = await cloudinaryUploadImage(img.buffer);
-      req.body.images.push(uploadedImage.secure_url); // إضافة الرابط
+      req.body.images.push(uploadedImage.secure_url);
     }
   }
 

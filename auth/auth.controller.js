@@ -29,7 +29,7 @@ const Signin = catchError(async (req, res) => {
     "1234"
   );
 
-  res.status(200).json({ message: "Success login", token });
+  res.status(200).json({ message: "Success login", user ,token });
 });
 
 const changeUserPassword = catchError(async (req, res, next) => {
@@ -46,7 +46,7 @@ const changeUserPassword = catchError(async (req, res, next) => {
     );
     return res
       .status(200)
-      .json({ message: "Password changed successfully", token });
+      .json({ message: "Password changed successfully",user ,token });
   }
 
   return next(new AppError("Incorrect email or password", 401));

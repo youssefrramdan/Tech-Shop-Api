@@ -29,7 +29,7 @@ const Signin = catchError(async (req, res) => {
     "1234"
   );
 
-  res.status(200).json({ message: "Success login", user ,token });
+  res.status(200).json({ message: "Successfull login", user ,token });
 });
 
 const changeUserPassword = catchError(async (req, res, next) => {

@@ -1,16 +1,17 @@
 import { catchError } from "../../middlewares/catchError.js";
 import { Coupon } from "../../models/Coupon.model.js";
-
 const addCoupon = catchError(async (req, res, next) => {
-  let isExist = await Coupon.findOne({code :req.body.code})
-  if (isExist) {
-    return res.status(404).json({ message: "this is exist" });
-
+  let isExist = await Coupon.findOne({ code: req.body.code });
+    if (isExist) {
+    return res.status(409).json({ message: "This coupon already exists." });
   }
+
   let coupon = new Coupon(req.body);
   await coupon.save();
-  res.json({ message: "success", coupon });
+  
+  res.status(201).json({ message: "Coupon added successfully.", coupon });
 });
+
 
 const allCoupons = catchError(async (req, res, next) => {
   let coupons = await Coupon.find();

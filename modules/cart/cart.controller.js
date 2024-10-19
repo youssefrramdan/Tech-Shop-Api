@@ -21,13 +21,15 @@ const addToCart = catchError(async (req, res, next) => {
         product: req.body.product,
         quantity: req.body.quantity || 1,
         price: req.body.price,
-        image: product.imageCover // إضافة رابط الصورة هنا
+        image: product.imageCover 
       }],
+      totalCartPrice: req.body.price * (req.body.quantity || 1) 
     });
     
     await cart.save();
     return res.json({ message: "success", cart });
-  } else {
+  }
+   else {
     let item = isCartExist.cartItems.find(item => item.product == req.body.product);
     
     if (item) {

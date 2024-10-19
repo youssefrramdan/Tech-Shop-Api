@@ -14,7 +14,7 @@ const Signup = catchError(async (req, res) => {
     },
     "1234"
   );
-
+  res.setHeader("Authorization", `Bearer ${token}`);
   res.status(201).json({ message: "success", user, token });
 });
 
@@ -28,7 +28,7 @@ const Signin = catchError(async (req, res) => {
     { userId: user._id, name: user.name, role: user.role },
     "1234"
   );
-
+  res.setHeader("Authorization", `Bearer ${token}`);
   res.status(200).json({ message: "Success login", user ,token });
 });
 
@@ -44,17 +44,24 @@ const changeUserPassword = catchError(async (req, res, next) => {
       { userId: user._id, name: user.name, role: user.role },
       "1234"
     );
-    return res
-      .status(200)
-      .json({ message: "Password changed successfully",user ,token });
+    res.setHeader("Authorization", `Bearer ${token}`);
+
+    return res.status(200).json({ message: "Password changed successfully",user ,token });
   }
 
   return next(new AppError("Incorrect email or password", 401));
 });
+
+
 const protectedRoutes = catchError(async (req, res, next) => {
-  let { token } = req.headers;
+  let { authorization } = req.headers;
   let userPayload = null;
-  if (!token) return next(new AppError("token not provided", 401));
+
+  if (!authorization || !authorization.startsWith("Bearer ")) {
+    return next(new AppError("token not provided or invalid format", 401));
+  }
+
+  const token = authorization.split(" ")[1];
 
   jwt.verify(token, "1234", (err, payload) => {
     if (err) return next(new AppError(err, 401));
@@ -66,17 +73,17 @@ const protectedRoutes = catchError(async (req, res, next) => {
 
   if (user.passwordChangedAt) {
     let time = parseInt(user.passwordChangedAt.getTime() / 1000);
-    if (time > userPayload.iat)
+    if (time > userPayload.iat) {
       return next(new AppError("invalid token ... login again", 401));
+    }
   }
 
-  req.user = user; //role
+  req.user = user; 
   next();
 });
 
 const alloweTo = (...roles) => {
   return catchError(async (req, res, next) => {
-    // Checking if the user's role is included in the allowed roles
     if (roles.includes(req.user.role)) {
       return next();
     }

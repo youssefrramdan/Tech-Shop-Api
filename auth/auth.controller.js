@@ -4,19 +4,41 @@ import { AppError } from "../utils/appError.js";
 import { User } from "../models/User.model.js";
 import { catchError } from "../middlewares/catchError.js";
 
+// JWT Secret from environment variable
+const JWT_SECRET = process.env.JWT_SECRET || "1234";
+
 const Signup = catchError(async (req, res) => {
   let user = await new User(req.body);
   await user.save();
+
+  // Set token expiration (e.g., 1 hour)
+  const expiresIn = '1h';
   let token = jwt.sign(
     {
       userId: user._id,
       role: user.role,
     },
-    "1234"
+    JWT_SECRET,
+    { expiresIn } // Token expiration time
   );
-  res.setHeader("Authorization", `Bearer ${token}`);
-  res.status(201).json({ message: "success", user, token });
+
+  // Save the token in a cookie
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: true,
+    maxAge: 3600000, // Expire in 1 hour (in milliseconds)
+    sameSite: 'Strict',
+  });
+
+  // Send token and expiration time in the response
+  res.status(201).json({ 
+    message: "success", 
+    user, 
+    token, 
+    expiresIn // Send the token expiration time
+  });
 });
+
 
 const Signin = catchError(async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
@@ -26,11 +48,21 @@ const Signin = catchError(async (req, res) => {
 
   let token = jwt.sign(
     { userId: user._id, name: user.name, role: user.role },
-    "1234"
+    JWT_SECRET,
+    { expiresIn: '1h' } // Token expiration time
   );
-  res.setHeader("Authorization", `Bearer ${token}`);
-  res.status(200).json({ message: "Success login", user ,token });
+
+  // Save the token in a cookie
+  res.cookie('token', token, {
+    httpOnly: true, // Accessible only by the web server
+    secure: true, // Always secure (only sent over HTTPS)
+    maxAge: 3600000, // Token valid for 1 hour (in milliseconds)
+    sameSite: 'Strict', // Prevent CSRF
+  });
+
+  res.status(200).json({ message: "Success login", user ,token, expiresIn: '1h' });
 });
+
 
 const changeUserPassword = catchError(async (req, res, next) => {
   let user = await User.findOne({ email: req.body.email });
@@ -42,11 +74,19 @@ const changeUserPassword = catchError(async (req, res, next) => {
 
     let token = jwt.sign(
       { userId: user._id, name: user.name, role: user.role },
-      "1234"
+      JWT_SECRET,
+      { expiresIn: '1h' } // Token expiration time
     );
-    res.setHeader("Authorization", `Bearer ${token}`);
 
-    return res.status(200).json({ message: "Password changed successfully",user ,token });
+    // Save the new token in a cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 3600000, // Expire in 1 hour (in milliseconds)
+      sameSite: 'Strict',
+    });
+
+    return res.status(200).json({ message: "Password changed successfully", user, token, expiresIn: '1h' });
   }
 
   return next(new AppError("Incorrect email or password", 401));
@@ -58,23 +98,26 @@ const protectedRoutes = catchError(async (req, res, next) => {
   let userPayload = null;
 
   if (!authorization || !authorization.startsWith("Bearer ")) {
-    return next(new AppError("token not provided or invalid format", 401));
+    return next(new AppError("Token not provided or invalid format", 401));
   }
 
   const token = authorization.split(" ")[1];
 
-  jwt.verify(token, "1234", (err, payload) => {
-    if (err) return next(new AppError(err, 401));
+  jwt.verify(token, JWT_SECRET, (err, payload) => {
+    if (err && err.name === 'TokenExpiredError') {
+      return next(new AppError("Token expired, please login again", 401));
+    }
+    if (err) return next(new AppError("Invalid token", 401));
     userPayload = payload;
   });
 
   let user = await User.findById(userPayload.userId);
-  if (!user) return next(new AppError("user not found", 401));
+  if (!user) return next(new AppError("User not found", 401));
 
   if (user.passwordChangedAt) {
     let time = parseInt(user.passwordChangedAt.getTime() / 1000);
     if (time > userPayload.iat) {
-      return next(new AppError("invalid token ... login again", 401));
+      return next(new AppError("Invalid token, login again", 401));
     }
   }
 
@@ -82,12 +125,13 @@ const protectedRoutes = catchError(async (req, res, next) => {
   next();
 });
 
+
 const alloweTo = (...roles) => {
   return catchError(async (req, res, next) => {
     if (roles.includes(req.user.role)) {
       return next();
     }
-    return next(new AppError('You are not authorized to access this endpoint', 403)); // Optionally, you can set the HTTP status code to 403 (Forbidden)
+    return next(new AppError('You are not authorized to access this endpoint', 403)); // Set HTTP status code to 403 (Forbidden)
   });
 };
 

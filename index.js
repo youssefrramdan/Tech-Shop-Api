@@ -5,6 +5,7 @@ import { globalError } from "./middlewares/globalError.js";
 import { AppError } from "./utils/appError.js";
 import dotenv from "dotenv";
 import cors from "cors";  // Ensure cors is imported
+import cookieParser from 'cookie-parser'; // Correctly import cookie-parser
 
 dotenv.config({ path: "./config.env" });
 const app = express();
@@ -12,12 +13,14 @@ const app = express();
 // CORS configuration
 app.use(cors({
   origin: 'http://localhost:5173',  // Allow localhost for development
-  credentials: true  // Include credentials if needed
+  credentials: true  // Include credentials (cookies, authorization headers, etc.) in CORS requests
 }));
 
+// Middleware to parse cookies
+app.use(cookieParser()); // Initialize cookie-parser
+
 app.use("/uploads", express.static("./uploads"));
-dotenv.config({ path: 'config.env' });
-app.use(express.json());
+app.use(express.json()); // Parse incoming JSON requests
 
 // Bootstrapping the app
 bootstrap(app);

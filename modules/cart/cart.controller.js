@@ -89,22 +89,36 @@ const removeItemFromCart = catchError(async (req, res, next) => {
 
   return res.json({ message: "Item removed successfully", cart });
 });
+
 const getLoggedUser = catchError(async (req, res, next) => {
-  const cart = await Cart.findOne({ user: req.user._id }).populate('cartItems.product');
-  
-  if (!cart) return next(new AppError('Cart not found', 404));
+  try {
+    // البحث عن السلة الحالية للمستخدم وتضمين تفاصيل المنتج
+    const cart = await Cart.findOne({ user: req.user._id }).populate('cartItems.product');
 
-  const formattedCartItems = cart.cartItems.map(item => ({
-    product: {
-      id: item.product._id,
-      name: item.product.name,
-      image: item.product.imageCover,
-    },
-    quantity: item.quantity,
-    price: item.price,
-  }));
+    // التحقق من وجود السلة
+    if (!cart) {
+      return next(new AppError('Cart not found', 404));
+    }
 
-  return res.json({ message: "Cart retrieved successfully", cart: { ...cart._doc, cartItems: formattedCartItems } });
+    // تنسيق عناصر السلة لتتضمن معرف العنصر وتفاصيل المنتج
+    const formattedCartItems = cart.cartItems.map(item => ({
+      id: item._id, // إضافة معرف العنصر في السلة
+      product: {
+        id: item.product._id,
+        name: item.product.name,
+        image: item.product.imageCover,
+      },
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    return res.json({
+      message: "Cart retrieved successfully",
+      cart: { ...cart._doc, cartItems: formattedCartItems },
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 

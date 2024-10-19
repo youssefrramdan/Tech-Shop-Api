@@ -89,13 +89,24 @@ const removeItemFromCart = catchError(async (req, res, next) => {
 
   return res.json({ message: "Item removed successfully", cart });
 });
-
 const getLoggedUser = catchError(async (req, res, next) => {
-  const cart = await Cart.findOne({user : req.user._id})
+  const cart = await Cart.findOne({ user: req.user._id }).populate('cartItems.product');
+  
   if (!cart) return next(new AppError('Cart not found', 404));
 
-  return res.json({ message: "Item removed successfully", cart });
+  const formattedCartItems = cart.cartItems.map(item => ({
+    product: {
+      id: item.product._id,
+      name: item.product.name,
+      image: item.product.imageCover,
+    },
+    quantity: item.quantity,
+    price: item.price,
+  }));
+
+  return res.json({ message: "Cart retrieved successfully", cart: { ...cart._doc, cartItems: formattedCartItems } });
 });
+
 
 const clearUserCart = catchError(async (req, res, next) => {
   const cart = await Cart.findOneAndDelete({user : req.user._id})

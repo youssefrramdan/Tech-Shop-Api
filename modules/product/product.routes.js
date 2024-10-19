@@ -20,10 +20,10 @@ productRouter
   .route("/")
   .post(
     protectedRoutes,
+    uploadMixedImage([{ name: 'imageCover', maxCount: 1 }, { name: 'images', maxCount: 10 }]), // إضافة دعم لرفع الصور
     checkCategoryExists,
     checkSubcategoryExists,
     checkBrandExists,
-    uploadMixedImage([{ name: 'imageCover', maxCount: 1 }, { name: 'images', maxCount: 10 }]), // إضافة دعم لرفع الصور
     addProduct
   )
   .get(getAllProducts);

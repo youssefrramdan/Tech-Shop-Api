@@ -21,6 +21,7 @@ const addToCart = catchError(async (req, res, next) => {
         product: req.body.product,
         quantity: req.body.quantity || 1,
         price: req.body.price,
+        image: product.imageCover // إضافة رابط الصورة هنا
       }],
     });
     
@@ -37,6 +38,7 @@ const addToCart = catchError(async (req, res, next) => {
         product: req.body.product,
         quantity: req.body.quantity || 1,
         price: req.body.price,
+        image: product.imageCover // إضافة رابط الصورة هنا
       });
     }
 
@@ -47,8 +49,8 @@ const addToCart = catchError(async (req, res, next) => {
     await isCartExist.save();
     return res.json({ message: "success", cart: isCartExist });
   }
-}
-);
+});
+
 
 const updateProductQuantity = catchError(async (req, res, next) => {
   const productId = req.params.id;

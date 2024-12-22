@@ -38,15 +38,14 @@ const getAllProducts = catchError(async (req, res, next) => {
 });
 
 const getSpecificProduct = catchError(async (req, res, next) => {
-  const product = await Product.findById(req.params.id)
-
+  const product = await Product.findById(req.params.id);
+  
   if (!product) {
     return next(new AppError("Product not found", 404));
   }
-
+  
   res.json({ message: "success", product });
 });
-
 const updateProduct = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });
 

@@ -3,11 +3,20 @@ import { Category } from "../../models/Category.model.js";
 import slugify from "slugify";
 import { AppError } from "../../utils/appError.js";
 import { deleteOne, updateOne } from "../handlers/handlers.js";
+import { cloudinaryUploadImage } from "../../fileUpload/fileUpload.js"; 
 
 const addCategory = catchError(async (req, res, next) => {
-  req.body.slug = slugify(req.body.name, { lower: true });  
+  req.body.slug = slugify(req.body.name, { lower: true });
+
+  // Handle category image upload
+  if (req.files?.image) {
+    const imageUpload = await cloudinaryUploadImage(req.files.image[0].buffer);
+    req.body.image = imageUpload.secure_url;
+  }
+
   let category = new Category(req.body);
   await category.save();
+
   res.json({ message: "success", category });
 });
 
@@ -24,10 +33,30 @@ const getSpecificCategory = catchError(async (req, res, next) => {
   res.json({ message: "success", category });
 });
 
-const updateCategory = updateOne(Category)
+const updateCategory = catchError(async (req, res, next) => {
+  req.body.slug = slugify(req.body.name, { lower: true });
 
-const deleteCategory = deleteOne(Category)
+  let category = await Category.findById(req.params.id);
+  if (!category) {
+    return next(new AppError("Category not found", 404));
+  }
 
+  // Handle image upload if provided
+  if (req.files?.image) {
+    const imageUpload = await cloudinaryUploadImage(req.files.image[0].buffer);
+    req.body.image = imageUpload.secure_url;
+  }
+
+  const updatedCategory = await Category.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true, runValidators: true }
+  );
+
+  res.json({ message: "Category updated successfully", category: updatedCategory });
+});
+
+const deleteCategory = deleteOne(Category);
 
 export {
   addCategory,

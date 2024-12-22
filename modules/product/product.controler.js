@@ -39,9 +39,6 @@ const getAllProducts = catchError(async (req, res, next) => {
 
 const getSpecificProduct = catchError(async (req, res, next) => {
   const product = await Product.findById(req.params.id)
-    .populate({ path: 'category', select: 'name' }) // استبدل الـ ID الخاص بالفئة باسمها
-    .populate({ path: 'subcategory', select: 'name' }) // استبدل الـ ID الخاص بالتصنيف الفرعي باسمها
-    .populate({ path: 'brand', select: 'name' }); // استبدل الـ ID الخاص بالعلامة التجارية باسمها
 
   if (!product) {
     return next(new AppError("Product not found", 404));

@@ -55,7 +55,7 @@ const schema = mongoose.Schema(
     },
     brand: {
       type: Types.ObjectId,
-      ref: "brand",
+      ref: "Brand",
       required: true,
     },
   },

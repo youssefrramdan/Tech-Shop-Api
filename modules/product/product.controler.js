@@ -39,7 +39,9 @@ const getAllProducts = catchError(async (req, res, next) => {
 
 const getSpecificProduct = catchError(async (req, res, next) => {
   const product = await Product.findById(req.params.id)
-    // s الـ ID الخاص بالعلامة التجارية باسمها
+    .populate('category', 'name') // جلب اسم الفئة فقط
+    .populate('subcategory', 'name') // جلب اسم الفئة الفرعية فقط
+    .populate('brand', 'name'); // جلب اسم العلامة التجارية فقط
 
   if (!product) {
     return next(new AppError("Product not found", 404));
@@ -47,6 +49,7 @@ const getSpecificProduct = catchError(async (req, res, next) => {
 
   res.json({ message: "success", product });
 });
+
 
 const updateProduct = catchError(async (req, res, next) => {
   req.body.slug = slugify(req.body.name, { lower: true });

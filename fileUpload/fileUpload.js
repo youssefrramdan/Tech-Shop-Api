@@ -23,7 +23,6 @@ export const cloudinaryUploadImage = async (fileBuffer) => {
         }
       );
 
-      // تمرير الـ Buffer إلى الـ stream
       stream.end(fileBuffer);
     });
 

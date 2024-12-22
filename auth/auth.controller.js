@@ -7,7 +7,7 @@ import { catchError } from "../middlewares/catchError.js";
 // JWT Secret from environment variable
 const JWT_SECRET = process.env.JWT_SECRET || "1234";
 
-const Signup = catchError(async (req, res, next) => {
+const Signup = catchError(async (req, res) => {
   const { password, rePassword, ...userData } = req.body;
 
   // Validate passwords match
@@ -15,36 +15,35 @@ const Signup = catchError(async (req, res, next) => {
     return res.status(400).json({ message: "Passwords do not match" });
   }
 
-  // Hash the password before saving
-  const hashedPassword = bcrypt.hashSync(password, 10);
-
   // Create the user
-  let user = new User({
-    ...userData,
-    password: hashedPassword,
-  });
+  let user = await new User({ ...userData, password });
   await user.save();
 
-  // Generate JWT token
-  const expiresIn = "1h";
-  const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, {
-    expiresIn,
-  });
+  // Set token expiration (e.g., 1 hour)
+  const expiresIn = '1h';
+  let token = jwt.sign(
+    {
+      userId: user._id,
+      role: user.role,
+    },
+    JWT_SECRET,
+    { expiresIn } // Token expiration time
+  );
 
-  // Set the token in a secure cookie
-  res.cookie("token", token, {
+  // Save the token in a cookie
+  res.cookie('token', token, {
     httpOnly: true,
     secure: true,
-    maxAge: 3600000, // 1 hour in milliseconds
-    sameSite: "Strict",
+    maxAge: 3600000, // Expire in 1 hour (in milliseconds)
+    sameSite: 'Strict',
   });
 
-  // Return response
-  res.status(201).json({
-    message: "Registration successful",
-    user,
-    token,
-    expiresIn,
+  // Send token and expiration time in the response
+  res.status(201).json({ 
+    message: "Registration successful", 
+    user, 
+    token, 
+    expiresIn // Send the token expiration time
   });
 });
 
@@ -57,20 +56,18 @@ const Signin = catchError(async (req, res) => {
   let token = jwt.sign(
     { userId: user._id, name: user.name, role: user.role },
     JWT_SECRET,
-    { expiresIn: "1h" } // Token expiration time
+    { expiresIn: '1h' } // Token expiration time
   );
 
   // Save the token in a cookie
-  res.cookie("token", token, {
+  res.cookie('token', token, {
     httpOnly: true, // Accessible only by the web server
     secure: true, // Always secure (only sent over HTTPS)
     maxAge: 3600000, // Token valid for 1 hour (in milliseconds)
-    sameSite: "Strict", // Prevent CSRF
+    sameSite: 'Strict', // Prevent CSRF
   });
 
-  res
-    .status(200)
-    .json({ message: "Success login", user, token, expiresIn: "1h" });
+  res.status(200).json({ message: "Success login", user, token, expiresIn: '1h' });
 });
 
 const changeUserPassword = catchError(async (req, res, next) => {
@@ -95,14 +92,12 @@ const changeUserPassword = catchError(async (req, res, next) => {
       sameSite: "Strict",
     });
 
-    return res
-      .status(200)
-      .json({
-        message: "Password changed successfully",
-        user,
-        token,
-        expiresIn: "1h",
-      });
+    return res.status(200).json({
+      message: "Password changed successfully",
+      user,
+      token,
+      expiresIn: "1h",
+    });
   }
 
   return next(new AppError("Incorrect email or password", 401));

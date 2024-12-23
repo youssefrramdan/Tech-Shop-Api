@@ -1,133 +1,187 @@
+// authController.js
+
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { AppError } from "../utils/appError.js";
 import { User } from "../models/User.model.js";
 import { catchError } from "../middlewares/catchError.js";
 
-// JWT Secret from environment variable
+// JWT Secret من متغير البيئة
 const JWT_SECRET = process.env.JWT_SECRET || "1234";
 
+// دالة مساعدة لتوليد JWT
+const generateToken = (user) => {
+  return jwt.sign(
+    { userId: user._id, name: user.name, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+};
+
+// دالة مساعدة لتنسيق بيانات المستخدم
+const formatUser = (user) => {
+  return {
+    name: user.name,
+    email: user.email,
+    role: user.role
+  };
+};
+
+// دالة تسجيل المستخدم (Signup)
 const Signup = catchError(async (req, res) => {
   const { password, rePassword, ...userData } = req.body;
 
-  // Validate passwords match
+  // التحقق من تطابق كلمات المرور
   if (password !== rePassword) {
     return res.status(400).json({ message: "Passwords do not match" });
   }
 
-  // Create the user
-  let user = await new User({ ...userData, password });
+  // التحقق من عدم وجود المستخدم مسبقًا
+  const existingUser = await User.findOne({ email: userData.email });
+  if (existingUser) {
+    return res.status(400).json({ message: "Email already in use" });
+  }
+
+  // تشفير كلمة المرور قبل الحفظ
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  // إنشاء المستخدم
+  let user = new User({ ...userData, password: hashedPassword });
   await user.save();
 
-  // Set token expiration (e.g., 1 hour)
-  const expiresIn = '1h';
-  let token = jwt.sign(
-    {
-      userId: user._id,
-      role: user.role,
-    },
-    JWT_SECRET,
-    { expiresIn } // Token expiration time
-  );
+  // توليد التوكن
+  let token = generateToken(user);
 
-  // Save the token in a cookie
+  // حفظ التوكن في الكوكيز
   res.cookie('token', token, {
     httpOnly: true,
-    secure: true,
-    maxAge: 3600000, // Expire in 1 hour (in milliseconds)
+    secure: process.env.NODE_ENV === 'production', // تأكد من تفعيل العلم secure في الإنتاج
+    maxAge: 3600000, // 1 ساعة بالميلي ثانية
     sameSite: 'Strict',
   });
 
-  // Send token and expiration time in the response
+  // إرسال التوكن في جسم الاستجابة ليتم تخزينه في الـ Local Storage
   res.status(201).json({ 
     message: "Registration successful", 
-    user, 
+    user: formatUser(user), 
     token, 
-    expiresIn // Send the token expiration time
+    expiresIn: '1h' 
   });
 });
 
+// دالة تسجيل الدخول (Signin)
 const Signin = catchError(async (req, res) => {
-  let user = await User.findOne({ email: req.body.email });
-  if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
+  const { email, password } = req.body;
+
+  // البحث عن المستخدم بواسطة البريد الإلكتروني
+  let user = await User.findOne({ email });
+  if (!user) {
     return res.status(400).json({ message: "Invalid email or password" });
   }
 
-  let token = jwt.sign(
-    { userId: user._id, name: user.name, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '1h' } // Token expiration time
-  );
+  // مقارنة كلمات المرور
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ message: "Invalid email or password" });
+  }
 
-  // Save the token in a cookie
+  // توليد التوكن
+  let token = generateToken(user);
+
+  // حفظ التوكن في الكوكيز
   res.cookie('token', token, {
-    httpOnly: true, // Accessible only by the web server
-    secure: true, // Always secure (only sent over HTTPS)
-    maxAge: 3600000, // Token valid for 1 hour (in milliseconds)
-    sameSite: 'Strict', // Prevent CSRF
+    httpOnly: true, // يمكن الوصول إليه فقط من قبل الخادم
+    secure: process.env.NODE_ENV === 'production', // تأكد من تفعيل العلم secure في الإنتاج
+    maxAge: 3600000, // 1 ساعة بالميلي ثانية
+    sameSite: 'Strict', // منع CSRF
   });
 
-  res.status(200).json({ message: "Success login", user, token, expiresIn: '1h' });
+  // إرسال التوكن في جسم الاستجابة ليتم تخزينه في الـ Local Storage
+  res.status(200).json({ 
+    message: "Success login", 
+    user: formatUser(user), 
+    token, 
+    expiresIn: '1h' 
+  });
 });
 
+// دالة تغيير كلمة المرور (changeUserPassword)
 const changeUserPassword = catchError(async (req, res, next) => {
-  let user = await User.findOne({ email: req.body.email });
+  const { email, oldPassword, newPassword } = req.body;
 
-  if (user && bcrypt.compareSync(req.body.oldPassword, user.password)) {
-    user.password = req.body.newPassword;
-    user.passwordChangedAt = Date.now();
-    await user.save();
-
-    let token = jwt.sign(
-      { userId: user._id, name: user.name, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "1h" } // Token expiration time
-    );
-
-    // Save the new token in a cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      maxAge: 3600000, // Expire in 1 hour (in milliseconds)
-      sameSite: "Strict",
-    });
-
-    return res.status(200).json({
-      message: "Password changed successfully",
-      user,
-      token,
-      expiresIn: "1h",
-    });
+  // البحث عن المستخدم بواسطة البريد الإلكتروني
+  let user = await User.findOne({ email });
+  if (!user) {
+    return next(new AppError("Incorrect email or password", 401));
   }
 
-  return next(new AppError("Incorrect email or password", 401));
+  // مقارنة كلمة المرور القديمة
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!isMatch) {
+    return next(new AppError("Incorrect email or password", 401));
+  }
+
+  // تشفير كلمة المرور الجديدة
+  const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+  user.password = hashedNewPassword;
+  user.passwordChangedAt = Date.now();
+  await user.save();
+
+  // توليد توكن جديد
+  let token = generateToken(user);
+
+  // حفظ التوكن الجديد في الكوكيز
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // تأكد من تفعيل العلم secure في الإنتاج
+    maxAge: 3600000, // 1 ساعة بالميلي ثانية
+    sameSite: "Strict",
+  });
+
+  // إرسال التوكن الجديد في جسم الاستجابة ليتم تخزينه في الـ Local Storage
+  res.status(200).json({
+    message: "Password changed successfully",
+    user: formatUser(user),
+    token,
+    expiresIn: "1h",
+  });
 });
 
+// Middleware حماية المسارات (protectedRoutes)
 const protectedRoutes = catchError(async (req, res, next) => {
-  let { authorization } = req.headers;
-  let userPayload = null;
+  const { authorization } = req.headers;
+  let token = null;
 
-  if (!authorization || !authorization.startsWith("Bearer ")) {
-    return next(new AppError("Token not provided or invalid format", 401));
+  // استخراج التوكن من رأس Authorization مباشرة بدون 'Bearer '
+  if (authorization) {
+    token = authorization; // التوكن يُرسل مباشرة بدون 'Bearer '
+  } else if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
   }
 
-  const token = authorization.split(" ")[1];
+  if (!token) {
+    return next(new AppError("Token not provided", 401));
+  }
 
-  jwt.verify(token, JWT_SECRET, (err, payload) => {
-    if (err && err.name === "TokenExpiredError") {
+  let userPayload;
+  try {
+    userPayload = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
       return next(new AppError("Token expired, please login again", 401));
     }
-    if (err) return next(new AppError("Invalid token", 401));
-    userPayload = payload;
-  });
+    return next(new AppError("Invalid token", 401));
+  }
 
-  let user = await User.findById(userPayload.userId);
-  if (!user) return next(new AppError("User not found", 401));
+  const user = await User.findById(userPayload.userId);
+  if (!user) {
+    return next(new AppError("User not found", 401));
+  }
 
   if (user.passwordChangedAt) {
-    let time = parseInt(user.passwordChangedAt.getTime() / 1000);
-    if (time > userPayload.iat) {
-      return next(new AppError("Invalid token, login again", 401));
+    const passwordChangedTimestamp = parseInt(user.passwordChangedAt.getTime() / 1000, 10);
+    if (passwordChangedTimestamp > userPayload.iat) {
+      return next(new AppError("Password changed recently, please login again", 401));
     }
   }
 
@@ -135,6 +189,7 @@ const protectedRoutes = catchError(async (req, res, next) => {
   next();
 });
 
+// Middleware تفويض الوصول بناءً على الأدوار (alloweTo)
 const alloweTo = (...roles) => {
   return catchError(async (req, res, next) => {
     if (roles.includes(req.user.role)) {
@@ -142,7 +197,7 @@ const alloweTo = (...roles) => {
     }
     return next(
       new AppError("You are not authorized to access this endpoint", 403)
-    ); // Set HTTP status code to 403 (Forbidden)
+    ); // تعيين رمز الحالة HTTP إلى 403 (Forbidden)
   });
 };
 

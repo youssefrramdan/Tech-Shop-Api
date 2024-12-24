@@ -39,7 +39,10 @@ const createCashOrder = catchError(async (req, res, next) => {
 
 // Get User Orders
 const getUserOrders = catchError(async (req, res, next) => {
-  const orders = await Order.findOne({ user: req.user._id }).populate("OrderItems.product");
+  const orders = await Order.find({ user: req.user._id }).populate({
+    path: "OrderItems.product",
+    select: "name image price description category",
+  });
 
   if (!orders || orders.length === 0) {
     return res.status(404).json({ message: "No orders found for this user" });
@@ -47,6 +50,7 @@ const getUserOrders = catchError(async (req, res, next) => {
 
   res.status(200).json({ message: "success", orders });
 });
+
 
 const getAllOrders = catchError(async (req, res, next) => {
   const orders = await Order.find({});

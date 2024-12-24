@@ -78,6 +78,7 @@ const updateProductQuantity = catchError(async (req, res, next) => {
   await cart.save();
   return res.json({ message: "Product quantity updated successfully", cart });
 });
+
 const removeItemFromCart = catchError(async (req, res, next) => {
   // البحث عن السلة الحالية للمستخدم
   const cart = await Cart.findOneAndUpdate(
@@ -87,8 +88,16 @@ const removeItemFromCart = catchError(async (req, res, next) => {
   );
 
   // التحقق من وجود السلة بعد العملية
-  if (!cart) return next(new AppError('Cart not found', 404));
+  if (!cart) {
+    return next(new AppError('Cart not found', 404));
+  }
 
+  // التحقق إذا كان العنصر قد تم حذفه أم لا
+  if (cart.cartItems.length === 0) {
+    return next(new AppError('Cart is empty', 400)); // إذا كانت السلة فارغة
+  }
+
+  // إرجاع السلة بعد التحديث
   return res.json({ message: "Item removed successfully", cart });
 });
 

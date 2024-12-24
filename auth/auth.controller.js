@@ -60,7 +60,6 @@ const Signup = catchError(async (req, res) => {
     sameSite: 'Strict',
   });
 
-  // إرسال التوكن في جسم الاستجابة ليتم تخزينه في الـ Local Storage
   res.status(201).json({ 
     message: "Registration successful", 
     user: formatUser(user), 

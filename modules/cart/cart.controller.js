@@ -4,166 +4,143 @@ import { Coupon } from "../../models/Coupon.model.js";
 import { Product } from "../../models/Product.model.js";
 import { AppError } from "../../utils/appError.js";
 
-// إضافة منتج إلى السلة
 const addToCart = catchError(async (req, res, next) => {
-  const { product: productId, quantity = 1 } = req.body;
+  let isCartExist = await Cart.findOne({ user: req.user._id });
+  
+  let product = await Product.findById(req.body.product);
+  if (!product) return next(new AppError('Product not found', 404));
 
-  const product = await Product.findById(productId);
-  if (!product) return next(new AppError("Product not found", 404));
+  req.body.price = product.price;
 
-  if (quantity > product.stock) {
-    return next(new AppError("Insufficient stock", 404));
-  }
+  if (req.body.quantity > product.stock) return next(new AppError('Sold out', 404));
 
-  let cart = await Cart.findOne({ user: req.user._id });
-
-  if (!cart) {
-    cart = new Cart({
+  if (!isCartExist) {
+    let cart = new Cart({
       user: req.user._id,
-      cartItems: [
-        {
-          product: productId,
-          quantity,
-          price: product.price,
-          image: product.imageCover,
-        },
-      ],
-      totalCartPrice: product.price * quantity,
+      cartItems: [{
+        product: req.body.product,
+        quantity: req.body.quantity || 1,
+        price: req.body.price,
+        image: product.imageCover 
+      }],
+      totalCartPrice: req.body.price * (req.body.quantity || 1) 
     });
-  } else {
-    const existingItem = cart.cartItems.find(
-      (item) => item.product.toString() === productId
-    );
-
-    if (existingItem) {
-      existingItem.quantity += quantity;
-      if (existingItem.quantity > product.stock) {
-        return next(new AppError("Insufficient stock", 404));
-      }
+    
+    await cart.save();
+    return res.json({ message: "success", cart });
+  }
+   else {
+    let item = isCartExist.cartItems.find(item => item.product == req.body.product);
+    
+    if (item) {
+      item.quantity += req.body.quantity || 1;
+      if (item.quantity > product.stock) return next(new AppError('Sold Out', 404));
     } else {
-      cart.cartItems.push({
-        product: productId,
-        quantity,
-        price: product.price,
-        image: product.imageCover,
+      isCartExist.cartItems.push({
+        product: req.body.product,
+        quantity: req.body.quantity || 1,
+        price: req.body.price,
+        image: product.imageCover // إضافة رابط الصورة هنا
       });
     }
 
-    cart.totalCartPrice = cart.cartItems.reduce((total, item) => {
+    isCartExist.totalCartPrice = isCartExist.cartItems.reduce((total, item) => {
       return total + item.price * item.quantity;
     }, 0);
-  }
 
-  await cart.save();
-  return res.json({ message: "success", cart });
+    await isCartExist.save();
+    return res.json({ message: "success", cart: isCartExist });
+  }
 });
 
-// تحديث كمية منتج في السلة
+
 const updateProductQuantity = catchError(async (req, res, next) => {
-  const cartItemId = req.params.id;
-  const { quantity } = req.body;
+  const productId = req.params.id;
+  let cart = await Cart.findOne({ user: req.user._id });
+  if (!cart) return next(new AppError('Cart not found', 404));
 
-  if (!quantity || quantity < 1) {
-    return next(new AppError("Invalid quantity value", 400));
+  let product = await Product.findById(productId);
+  if (!product) return next(new AppError('Product not found', 404));
+
+  let item = cart.cartItems.find(item => item.product.toString() === productId);
+  if (!item) return next(new AppError('Product not in cart', 404));
+
+  item.quantity = req.body.quantity;
+
+  if (item.quantity > product.stock) {
+    return next(new AppError('Insufficient stock', 404));
   }
-
-  const cart = await Cart.findOne({ user: req.user._id });
-  if (!cart) return next(new AppError("Cart not found", 404));
-
-  const item = cart.cartItems.find(
-    (item) => item._id.toString() === cartItemId
-  );
-  if (!item) return next(new AppError("Product not in cart", 404));
-
-  const product = await Product.findById(item.product);
-  if (!product) return next(new AppError("Product not found", 404));
-
-  if (quantity > product.stock) {
-    return next(new AppError("Insufficient stock", 404));
-  }
-
-  item.quantity = quantity;
 
   cart.totalCartPrice = cart.cartItems.reduce((total, item) => {
     return total + item.price * item.quantity;
   }, 0);
 
   await cart.save();
-
   return res.json({ message: "Product quantity updated successfully", cart });
 });
-
-// حذف منتج من السلة
 const removeItemFromCart = catchError(async (req, res, next) => {
-  const cartItemId = req.params.id;
-
+  // البحث عن السلة الحالية للمستخدم
   const cart = await Cart.findOneAndUpdate(
-    { user: req.user._id },
-    { $pull: { cartItems: { _id: cartItemId } } },
-    { new: true }
+    { user: req.user._id }, // تحديد السلة الخاصة بالمستخدم
+    { $pull: { cartItems: { _id: req.params.id } } }, // حذف العنصر من السلة
+    { new: true } // إرجاع السلة المحدثة
   );
 
-  if (!cart) return next(new AppError("Cart not found", 404));
-
-  cart.totalCartPrice = cart.cartItems.reduce((total, item) => {
-    return total + item.price * item.quantity;
-  }, 0);
-
-  await cart.save();
+  // التحقق من وجود السلة بعد العملية
+  if (!cart) return next(new AppError('Cart not found', 404));
 
   return res.json({ message: "Item removed successfully", cart });
 });
 
-// جلب بيانات السلة للمستخدم الحالي
 const getLoggedUser = catchError(async (req, res, next) => {
-  const cart = await Cart.findOne({ user: req.user._id }).populate(
-    "cartItems.product"
-  );
+  try {
+    // البحث عن السلة الحالية للمستخدم وتضمين تفاصيل المنتج
+    const cart = await Cart.findOne({ user: req.user._id }).populate('cartItems.product');
 
-  if (!cart) {
-    return next(new AppError("Cart not found", 404));
+    // التحقق من وجود السلة
+    if (!cart) {
+      return next(new AppError('Cart not found', 404));
+    }
+
+    // تنسيق عناصر السلة لتتضمن معرف العنصر وتفاصيل المنتج
+    const formattedCartItems = cart.cartItems.map(item => ({
+      id: item._id, // إضافة معرف العنصر في السلة
+      product: {
+        id: item.product._id,
+        name: item.product.name,
+        image: item.product.imageCover,
+      },
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    return res.json({
+      message: "Cart retrieved successfully",
+      cart: { ...cart._doc, cartItems: formattedCartItems },
+    });
+  } catch (error) {
+    next(error);
   }
-
-  const formattedCartItems = cart.cartItems.map((item) => ({
-    id: item._id,
-    product: {
-      id: item.product._id,
-      name: item.product.name,
-      image: item.product.imageCover,
-      price: item.product.price,
-    },
-    quantity: item.quantity,
-    price: item.price,
-  }));
-
-  return res.json({
-    message: "Cart retrieved successfully",
-    cart: { ...cart._doc, cartItems: formattedCartItems },
-  });
 });
 
-// إفراغ السلة بالكامل
+
 const clearUserCart = catchError(async (req, res, next) => {
-  const cart = await Cart.findOneAndDelete({ user: req.user._id });
+  const cart = await Cart.findOneAndDelete({user : req.user._id})
 
-  if (!cart) return next(new AppError("Cart not found", 404));
-  return res.json({ message: "cart removed successfully" });
+  if (!cart) return next(new AppError('Cart not found', 404));
+  return res.json({ message: "cart removed successfully"});
 });
 
-// تطبيق كود خصم على السلة
 const applyCoupon = catchError(async (req, res, next) => {
-  const coupon = await Coupon.findOne({
-    code: req.body.code,
-    expires: { $gte: Date.now() },
-  });
-  if (!coupon) return next(new AppError("Opps coupon invalid", 404));
+  let coupon = await Coupon.findOne({ code: req.body.code, expires: { $gte: Date.now() } });
+  if (!coupon) return next(new AppError('Opps coupon invalid', 404));
 
-  const cart = await Cart.findOne({ user: req.user._id });
-  if (!cart) return next(new AppError("Cart not found", 404));
+  let cart = await Cart.findOne({ user: req.user._id });
+  if (!cart) return next(new AppError('Cart not found', 404));
 
-  cart.totalCartPriceAfterDiscount =
+  cart.totalCartPriceAfterDiscount = 
     cart.totalCartPrice - (cart.totalCartPrice * coupon.discount) / 100;
-
+  
   if (cart.totalCartPriceAfterDiscount < 0) cart.totalCartPriceAfterDiscount = 0;
 
   cart.discount = coupon.discount;
@@ -174,12 +151,6 @@ const applyCoupon = catchError(async (req, res, next) => {
   res.json({ message: "success", cart });
 });
 
-// تصدير الوظائف
-export {
-  addToCart,
-  updateProductQuantity,
-  removeItemFromCart,
-  getLoggedUser,
-  clearUserCart,
-  applyCoupon,
-};
+
+
+export { addToCart ,updateProductQuantity , removeItemFromCart ,getLoggedUser,clearUserCart , applyCoupon};

@@ -6,5 +6,14 @@ const authRouter = Router();
 authRouter.post("/signup", checkEmail,Signup);
 authRouter.post("/signin", Signin);
 authRouter.patch("/changepassword", changeUserPassword);
+authRouter.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+authRouter.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    res.redirect("/dashboard");
+  }
+);
 
 export default authRouter;

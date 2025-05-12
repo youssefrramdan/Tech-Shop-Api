@@ -1,14 +1,13 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-dotenv.config();
-const schema = mongoose.Schema(
+import mongoose from 'mongoose';
+
+const brandSchema = mongoose.Schema(
   {
     name: {
       type: String,
-      unique: [true, "name is required"],
+      unique: [true, 'name is required'],
       trim: true,
       required: true,
-      minLength: [2, "too short category name"],
+      minLength: [2, 'too short category name'],
     },
     slug: {
       type: String,
@@ -23,4 +22,4 @@ const schema = mongoose.Schema(
   }
 );
 
-export const Brand = mongoose.model("Brand", schema);
+export default mongoose.model('Brand', brandSchema);

@@ -2,10 +2,16 @@ import mongoose, { Types } from "mongoose";
 
 const schema = new mongoose.Schema(
   {
-    user: { type: Types.ObjectId, ref: "User" },
+    user: {
+      type: Types.ObjectId,
+      ref: "User",
+    },
     OrderItems: [
       {
-        product: { type: Types.ObjectId, ref: "Product" },
+        product: {
+          type: Types.ObjectId,
+          ref: "Product",
+        },
         quantity: Number,
         price: Number,
       },
@@ -30,9 +36,12 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    deliveredAt:Date
+    deliveredAt: Date,
   },
-  { timestamps: true, versionKey: false }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
 export const Order = mongoose.model("Order", schema);

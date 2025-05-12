@@ -37,7 +37,10 @@ const schema = mongoose.Schema(
       required: true,
       min: 0,
     },
-    sold: { type: Number, default: 0 },
+    sold: {
+      type: Number,
+      default: 0,
+    },
     discount: {
       type: Number,
       min: 0,
@@ -64,6 +67,5 @@ const schema = mongoose.Schema(
     versionKey: false,
   }
 );
-
 
 export const Product = mongoose.model("Product", schema);

@@ -1,13 +1,15 @@
 import mongoose from 'mongoose';
+import slugify from 'slugify';
 
-const categorySchema = mongoose.Schema(
+const categorySchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      unique: [true, 'Category name must be unique'],
-      trim: true,
       required: [true, 'Category name is required'],
-      minLength: [2, 'Too short category name'],
+      unique: true,
+      trim: true,
+      minlength: [2, 'Category name must be at least 2 characters long'],
+      maxlength: [32, 'Category name cannot exceed 32 characters'],
     },
     slug: {
       type: String,
@@ -22,11 +24,20 @@ const categorySchema = mongoose.Schema(
       type: String,
       required: [true, 'Category cover image is required'],
     },
+    image: {
+      type: String,
+    },
   },
   {
     timestamps: true,
     versionKey: false,
   }
 );
+
+// Create slug from name before saving
+categorySchema.pre('save', function (next) {
+  this.slug = slugify(this.name);
+  next();
+});
 
 export default mongoose.model('Category', categorySchema);

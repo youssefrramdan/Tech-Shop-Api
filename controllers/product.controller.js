@@ -1,125 +1,149 @@
-import { catchError } from "../middlewares/catchError.js";
-import { Product } from "../models/Product.model.js";
-import slugify from "slugify";
-import { AppError } from "../../utils/appError.js";
-import { deleteOne } from "../utils/handlers/handlers.js";
+/* eslint-disable prefer-const */
+import asyncHandler from 'express-async-handler';
+import slugify from 'slugify';
+import ProductModel from '../models/Product.model.js';
+import Category from '../models/Category.model.js'; // أو المسار الصحيح حسب مشروعك
+import ApiError from '../utils/apiError.js';
 
-import { cloudinaryUploadImage } from "../fileUpload/fileUpload.js";
+// @desc     Get all products
+// @route    GET /api/v1/products
+// @access   Public
+const getAllProduct = asyncHandler(async (req, res) => {
+  // 1) Filtering
+  const query = { ...req.query };
+  const excludesFields = ['page', 'limit', 'skip', 'fields', 'sort', 'keyword'];
+  excludesFields.forEach(field => delete query[field]);
 
-const addProduct = catchError(async (req, res, next) => {
-  req.body.slug = slugify(req.body.name, { lower: true });
+  let queryStr = JSON.stringify(query);
+  queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
+  // Convert queryStr back to object
+  const filters = JSON.parse(queryStr);
 
-  if (req.files.imageCover) {
-    const imageCoverUpload = await cloudinaryUploadImage(
-      req.files.imageCover[0].buffer
-    );
-    req.body.imageCover = imageCoverUpload.secure_url;
+  // 3) filters by [gt|gte|lt|lte|in]
+  let mongooseQuery = ProductModel.find(filters);
+  // 4) Searching By specific keyword
+  if (req.query.keyword) {
+    const searchQuery = {
+      $or: [
+        { title: { $regex: req.query.keyword, $options: 'i' } },
+        { description: { $regex: req.query.keyword, $options: 'i' } },
+      ],
+    };
+    mongooseQuery = ProductModel.find(searchQuery);
+  }
+  // 5) Sorting By specific property
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(',').join(' ');
+    mongooseQuery = mongooseQuery.sort(sortBy);
+  } else {
+    mongooseQuery = mongooseQuery.sort('-createdAt');
   }
 
-  if (req.files.images) {
-    req.body.images = [];
-    for (const img of req.files.images) {
-      const uploadedImage = await cloudinaryUploadImage(img.buffer);
-      req.body.images.push(uploadedImage.secure_url);
-    }
+  // 4) Field selection
+  if (req.query.fields) {
+    const fields = req.query.fields.split(',').join(' ');
+    mongooseQuery = mongooseQuery.select(fields);
+  } else {
+    mongooseQuery = mongooseQuery.select('-__v');
   }
 
-  const product = new Product(req.body);
-  await product.save();
+  // Execute query
+  const products = await mongooseQuery;
 
-  res.json({ message: "success", product });
-});
-
-const getAllProducts = catchError(async (req, res, next) => {
-  const products = await Product.find()
-    .populate({ path: "category", select: "name" })
-    .populate({ path: "subcategory", select: "name" });
-
-  res.json({ message: "success", products });
-});
-
-const getSpecificProduct = catchError(async (req, res, next) => {
-  const product = await Product.findById(req.params.id)
-    .populate("category", "name") // جلب اسم الفئة فقط
-    .populate("subcategory", "name") // جلب اسم الفئة الفرعية فقط
-    .populate("brand", "name"); // جلب اسم العلامة التجارية فقط
-
-  if (!product) {
-    return next(new AppError("Product not found", 404));
-  }
-
-  res.json({ message: "success", product });
-});
-
-const updateProduct = catchError(async (req, res, next) => {
-  req.body.slug = slugify(req.body.name, { lower: true });
-
-  const product = await Product.findById(req.params.id);
-  if (!product) {
-    return next(new AppError("Product not found", 404));
-  }
-
-  if (req.files?.imageCover) {
-    const imageCoverUpload = await cloudinaryUploadImage(
-      req.files.imageCover[0].buffer
-    );
-    req.body.imageCover = imageCoverUpload.secure_url;
-  }
-
-  if (req.files?.images) {
-    req.body.images = [];
-    for (const img of req.files.images) {
-      const uploadedImage = await cloudinaryUploadImage(img.buffer);
-      req.body.images.push(uploadedImage.secure_url);
-    }
-  }
-
-  const updatedProduct = await Product.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true, runValidators: true }
-  );
-
-  res.json({
-    message: "Product updated successfully",
-    product: updatedProduct,
+  // Response
+  res.status(200).json({
+    message: 'success',
+    data: products,
   });
 });
 
-const deleteProduct = deleteOne(Product);
-
-const pagination = catchError(async (req, res, next) => {
-  const pageNumber = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
-  const limit = req.query.limit ? Math.min(parseInt(req.query.limit), 100) : 5;
-  const skip = (pageNumber - 1) * limit;
-
-  const totalProducts = await Product.countDocuments();
-  const totalPages = Math.ceil(totalProducts / limit);
-
-  if (pageNumber > totalPages && totalPages > 0) {
-    return res.status(400).json({
-      message: "Invalid page number",
-      currentPage: pageNumber,
-      totalPages,
-    });
+// @desc     Get specific product by id
+// @param {String} id
+// @route    GET /api/v1/products/:productId
+// @access   Public
+const getSpecificProduct = asyncHandler(async (req, res, next) => {
+  const productId = req.params.id;
+  const product = await ProductModel.findById(productId).populate({
+    path: 'category',
+    select: 'name -_id',
+  });
+  if (!product) {
+    return next(new ApiError(`No product found with ID: ${productId}`, 404));
   }
-
-  const products = await Product.find().skip(skip).limit(limit);
-
-  return res.json({
-    message: "success",
-    products,
-    totalProducts,
-    totalPages,
-    limit,
+  res.status(200).json({
+    message: 'success',
+    data: product,
   });
 });
 
+// @desc     Create a new product
+// @route    POST /api/v1/products
+// @access   privite
+const createProduct = asyncHandler(async (req, res, next) => {
+  req.body.slug = slugify(req.body.title);
+  const images = [];
+  if (req.files) {
+    if (req.files.images) {
+      req.files.images.forEach(file => {
+        images.push(file.path);
+      });
+    }
+  }
+  const product = await ProductModel.create(req.body);
+  res.status(200).json({
+    message: 'success',
+    data: product,
+  });
+});
+
+// @desc     Update an existing product
+// @route    PUT /api/v1/products/:productId
+// @access   Private
+const updateProduct = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const images = [];
+  if (req.files) {
+    if (req.files.images) {
+      req.files.images.forEach(file => {
+        images.push(file.path);
+      });
+    }
+  }
+  const product = await ProductModel.findByIdAndUpdate({ _id: id }, req.body, {
+    new: true,
+    runValidators: true,
+  });
+  if (!product) {
+    return next(new ApiError(`No product found with ID: ${id}`, 404));
+  }
+  res.status(200).json({
+    message: 'success',
+    data: product,
+  });
+});
+
+// @desc     Delete an existing product
+// @route    DELETE /api/v1/products/:productId
+// @access   Private
+
+const deleteProduct = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const product = await ProductModel.findByIdAndDelete({ _id: id }, req.body, {
+    new: true,
+    runValidators: true,
+  });
+  if (!product) {
+    return next(new ApiError(`No product found with ID: ${id}`, 404));
+  }
+  res.status(200).json({
+    message: 'success',
+    data: product,
+  });
+});
 export {
-  addProduct,
-  getAllProducts,
+  getAllProduct,
   getSpecificProduct,
-  deleteProduct,
+  createProduct,
   updateProduct,
-  pagination,
+  deleteProduct,
 };

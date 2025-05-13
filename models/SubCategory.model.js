@@ -1,4 +1,5 @@
 import mongoose, { Types } from "mongoose";
+
 const schema = mongoose.Schema(
   {
     name: {
@@ -12,7 +13,7 @@ const schema = mongoose.Schema(
       type: String,
       lowercase: true,
       required: true,
-    },  
+    },
     category: {
       type: Types.ObjectId,
       ref: "Category",

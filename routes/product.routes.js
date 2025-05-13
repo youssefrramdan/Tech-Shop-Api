@@ -1,51 +1,37 @@
-import { Router } from "express";
+import express from 'express';
 import {
-  addProduct,
-  getAllProducts,
-  getSpecificProduct,
+  createProduct,
   deleteProduct,
+  getAllProduct,
   updateProduct,
-  pagination,
-} from "../controllers/product.controller.js";
-import { checkCategoryExists } from "../middlewares/checkCategoryExists.js";
-import { checkSubcategoryExists } from "../middlewares/checkSubCategoryExists.js";
-import { checkBrandExists } from "../middlewares/checkBrandExists.js";
-import { protectedRoutes } from "../auth/auth.controller.js";
-import { uploadMixedImage } from "../middlewares/uploadImages.js"; // استيراد uploadMixedImage
+} from '../controllers/product.controller.js';
+import { protectedRoutes } from '../controllers/auth.controller.js';
+import createUploader from '../middlewares/cloudnairyMiddleware.js';
 
-const productRouter = Router();
-
-// Routes for products
+const productRouter = express.Router();
+const upload = createUploader();
 productRouter
-  .route("/")
+  .route('/')
+  .get(getAllProduct)
   .post(
     protectedRoutes,
-    uploadMixedImage([
-      { name: "imageCover", maxCount: 1 },
-      { name: "images", maxCount: 10 },
-    ]), // إضافة دعم لرفع الصور
-    checkCategoryExists,
-    checkSubcategoryExists,
-    checkBrandExists,
-    addProduct
-  )
-  .get(getAllProducts);
-
-// Pagination route
-productRouter.get("/v1", pagination);
+    upload.fields([
+      { name: 'images', maxCount: 10 },
+      { name: 'imageCover', maxCount: 1 },
+    ]),
+    createProduct
+  );
 
 productRouter
-  .route("/:id")
-  .get(getSpecificProduct)
+  .route('/:id')
+  .delete(protectedRoutes, deleteProduct)
   .put(
     protectedRoutes,
-    uploadMixedImage([
-      { name: "imageCover", maxCount: 1 },
-      { name: "images", maxCount: 10 },
-    ]), // إضافة دعم لرفع الصور عند التحديث
+    upload.fields([
+      { name: 'images', maxCount: 10 },
+      { name: 'imageCover', maxCount: 1 },
+    ]),
     updateProduct
-  )
-  .delete(protectedRoutes, deleteProduct);
+  );
 
-// Export the router
 export default productRouter;

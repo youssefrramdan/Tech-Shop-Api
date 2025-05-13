@@ -1,14 +1,14 @@
-import mongoose, { Types } from "mongoose";
-import dotenv from "dotenv";
-dotenv.config();
-const schema = mongoose.Schema(
+import mongoose from 'mongoose';
+import slugify from 'slugify';
+
+const productSchema = new mongoose.Schema(
   {
-    name: {
+    title: {
       type: String,
-      unique: [true, "name is required"],
+      required: [true, 'Product title is required'],
       trim: true,
-      required: true,
-      minLength: [2, "too short category name"],
+      minlength: [3, 'Product title must be at least 3 characters long'],
+      maxlength: [100, 'Product title cannot exceed 100 characters'],
     },
     slug: {
       type: String,
@@ -16,26 +16,33 @@ const schema = mongoose.Schema(
     },
     description: {
       type: String,
-      required: true,
-      minLength: [30, "too short product description"],
-      maxLength: [20000, "too long product description"],
+      required: [true, 'Product description is required'],
+      trim: true,
+      minlength: [
+        10,
+        'Product description must be at least 10 characters long',
+      ],
     },
     imageCover: String,
-    images: [String],
+    images: [
+      {
+        type: String,
+      },
+    ],
     price: {
       type: Number,
-      required: true,
-      min: 0,
+      required: [true, 'Product price is required'],
+      min: [0, 'Price cannot be negative'],
     },
     priceAfterDiscount: {
       type: Number,
-      required: true,
       min: 0,
     },
     stock: {
       type: Number,
-      required: true,
-      min: 0,
+      required: [true, 'Product stock is required'],
+      min: [0, 'Stock cannot be negative'],
+      default: 0,
     },
     sold: {
       type: Number,
@@ -47,19 +54,23 @@ const schema = mongoose.Schema(
       max: 100,
     },
     category: {
-      type: Types.ObjectId,
-      ref: "Category",
-      required: true,
-    },
-    subcategory: {
-      type: Types.ObjectId,
-      ref: "SubCategory",
-      required: true,
+      type: mongoose.Schema.ObjectId,
+      ref: 'Category',
+      required: [true, 'Product category is required'],
     },
     brand: {
-      type: Types.ObjectId,
-      ref: "Brand",
-      required: true,
+      type: mongoose.Schema.ObjectId,
+      ref: 'Brand',
+      required: [true, 'Product brand is required'],
+    },
+    ratingsAverage: {
+      type: Number,
+      min: [1, 'Rating must be above or equal 1.0'],
+      max: [5, 'Rating must be below or equal 5.0 '],
+    },
+    ratingsQuantity: {
+      type: Number,
+      default: 0,
     },
   },
   {
@@ -68,4 +79,20 @@ const schema = mongoose.Schema(
   }
 );
 
-export const Product = mongoose.model("Product", schema);
+// Create slug from title before saving
+productSchema.pre('save', function (next) {
+  this.slug = slugify(this.title);
+  next();
+});
+
+// Add text index for search functionality
+productSchema.index({ title: 'text', description: 'text' });
+
+// Mongoose query middleware
+productSchema.pre(/^find/, function (next) {
+  this.populate({ path: 'category', select: 'name -_id' });
+  next();
+});
+
+const Product = mongoose.model('Product', productSchema);
+export default Product;

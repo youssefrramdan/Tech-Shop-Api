@@ -13,25 +13,28 @@ import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
 
 const upload = createUploader();
-const router = express.Router();
+const userRouter = express.Router();
 
 // Protect all routes after this middleware
-router.use(protectedRoutes);
+userRouter.use(protectedRoutes);
 
 // User routes for logged in user
-router.get('/me', getMe);
-router.put('/updateMe', upload.single('profileImage'), updateMe);
-router.put('/updateMyPassword', updateMyPassword);
+userRouter.get('/me', getMe);
+userRouter.put('/updateMe', upload.single('profileImage'), updateMe);
+userRouter.put('/updateMyPassword', updateMyPassword);
 
 // Admin only routes
-router.use(allowTo('admin'));
+userRouter.use(allowTo('admin'));
 
-router.route('/').get(getUsers).post(upload.single('profileImage'), createUser);
+userRouter
+  .route('/')
+  .get(getUsers)
+  .post(upload.single('profileImage'), createUser);
 
-router
+userRouter
   .route('/:id')
   .get(getUser)
   .put(upload.single('profileImage'), updateUser)
   .delete(deleteUser);
 
-export default router;
+export default userRouter;

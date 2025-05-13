@@ -59,15 +59,6 @@ const login = asyncHandler(async (req, res, next) => {
     return next(new ApiError('User does not exist', 401));
   }
 
-  if (!user.isVerified) {
-    return next(
-      new ApiError(
-        `Your email is not verified. Please verify your email. We sent an email to ${req.body.email}`,
-        403
-      )
-    );
-  }
-
   const isPasswordCorrect = await user.comparePassword(req.body.password);
   if (!isPasswordCorrect) {
     return next(new ApiError('Incorrect email or password', 401));
@@ -86,32 +77,7 @@ const login = asyncHandler(async (req, res, next) => {
   });
 });
 
-/**
- * @desc    Confirm Email
- * @route   GET /api/v1/auth/verify/:token
- * @access  Public
- */
-const confirmEmail = asyncHandler(async (req, res, next) => {
-  jwt.verify(
-    req.params.token,
-    process.env.JWT_SECRET_KEY,
-    async (err, decoded) => {
-      if (err) return next(new ApiError('Email verification failed', 404));
 
-      const user = await User.findByIdAndUpdate(
-        decoded.userId,
-        { isVerified: true },
-        { new: true }
-      );
-
-      if (!user) {
-        return next(new ApiError('User not found', 404));
-      }
-
-      res.status(200).json({ message: 'Email verified successfully' });
-    }
-  );
-});
 
 /**
  * @desc    Resend verification email
@@ -312,7 +278,6 @@ const logout = asyncHandler(async (req, res, next) => {
 export {
   signup,
   login,
-  confirmEmail,
   resendEmail,
   protectedRoutes,
   allowTo,

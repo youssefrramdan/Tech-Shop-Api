@@ -2,7 +2,6 @@ import express from 'express';
 import {
   signup,
   login,
-  confirmEmail,
   resendEmail,
   protectedRoutes,
   allowTo,
@@ -19,7 +18,6 @@ router.post('/signup', signup);
 router.post('/login', login);
 
 // Email verification routes
-router.get('/verify/:token', confirmEmail);
 router.post('/resend-email', resendEmail);
 
 // Password management routes

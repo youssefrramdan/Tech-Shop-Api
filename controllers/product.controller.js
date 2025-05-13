@@ -2,7 +2,6 @@
 import asyncHandler from 'express-async-handler';
 import slugify from 'slugify';
 import ProductModel from '../models/Product.model.js';
-import Category from '../models/Category.model.js'; // أو المسار الصحيح حسب مشروعك
 import ApiError from '../utils/apiError.js';
 
 // @desc     Get all products

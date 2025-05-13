@@ -102,10 +102,8 @@ const deleteBrand = asyncHandler(async (req, res, next) => {
   if (!brand) {
     return next(new ApiError('Brand not found', 404));
   }
-
   res.status(204).json({
     status: 'success',
-    data: null,
   });
 });
 

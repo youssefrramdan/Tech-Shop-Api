@@ -1,13 +1,15 @@
 import express from 'express';
 import {
-  getUsers,
-  getUser,
   createUser,
+  getAllUsers,
+  getUser,
   updateUser,
   deleteUser,
   getMe,
   updateMe,
-  updateMyPassword,
+  uploadUserImage,
+  changeMyPassword,
+  changeUserPassword,
 } from '../controllers/user.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -15,26 +17,23 @@ import createUploader from '../middlewares/cloudnairyMiddleware.js';
 const upload = createUploader();
 const userRouter = express.Router();
 
-// Protect all routes after this middleware
-userRouter.use(protectedRoutes);
-
-// User routes for logged in user
-userRouter.get('/me', getMe);
-userRouter.put('/updateMe', upload.single('profileImage'), updateMe);
-userRouter.put('/updateMyPassword', updateMyPassword);
-
-// Admin only routes
-userRouter.use(allowTo('admin'));
+userRouter.route('/').post(createUser).get(getAllUsers);
 
 userRouter
-  .route('/')
-  .get(getUsers)
-  .post(upload.single('profileImage'), createUser);
+  .route('/me')
+  .get(protectedRoutes, getMe)
+  .patch(protectedRoutes, updateMe);
 
 userRouter
-  .route('/:id')
-  .get(getUser)
-  .put(upload.single('profileImage'), updateUser)
-  .delete(deleteUser);
+  .route('/my-image')
+  .patch(protectedRoutes, upload.single('profileImage'), uploadUserImage);
+
+userRouter.route('/changePassword').patch(protectedRoutes, changeMyPassword);
+
+userRouter
+  .route('/changePassword/:id')
+  .patch(protectedRoutes, changeUserPassword);
+
+userRouter.route('/:id').get(getUser).put(updateUser).delete(deleteUser);
 
 export default userRouter;

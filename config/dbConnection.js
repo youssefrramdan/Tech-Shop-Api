@@ -1,13 +1,14 @@
 import mongoose from 'mongoose';
+import logger from './loger.config.js';
 
 const databaseConnection = async () => {
   mongoose
     .connect(process.env.DB_URI)
     .then(conn => {
-      console.log(`Database connected : ${conn.connection.host}`);
+      logger.info(`Database connected : ${conn.connection.host}`);
     })
     .catch(error => {
-      console.error(`Database error : ${error}`);
+      logger.error(`Database error : ${error}`);
     });
 };
 

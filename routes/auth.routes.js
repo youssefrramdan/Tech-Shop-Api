@@ -2,7 +2,6 @@ import express from 'express';
 import {
   signup,
   login,
-  resendEmail,
   protectedRoutes,
   allowTo,
   forgetPassword,
@@ -16,9 +15,6 @@ const router = express.Router();
 // Authentication routes
 router.post('/signup', signup);
 router.post('/login', login);
-
-// Email verification routes
-router.post('/resend-email', resendEmail);
 
 // Password management routes
 router.post('/forgot-password', forgetPassword);

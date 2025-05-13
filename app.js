@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import globalError from './middlewares/errorMiddleware.js';
 import ApiError from './utils/apiError.js';
 import bootstrap from './bootstrap.js';
+import logger from './config/loger.config.js';
 
 dotenv.config({ path: './config/config.env' });
 
@@ -37,7 +38,7 @@ app.use(express.json());
 app.use(cookieParser());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
-  console.log(`mode : ${process.env.NODE_ENV}`);
+  logger.info(`mode : ${process.env.NODE_ENV}`);
 }
 
 app.use(cookieParser());

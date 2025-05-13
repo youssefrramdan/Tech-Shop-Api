@@ -24,9 +24,6 @@ const categorySchema = new mongoose.Schema(
       type: String,
       required: [true, 'Category cover image is required'],
     },
-    image: {
-      type: String,
-    },
   },
   {
     timestamps: true,

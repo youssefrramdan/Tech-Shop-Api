@@ -1,13 +1,13 @@
-import mongoose, { Types } from "mongoose";
+import mongoose, { Types } from 'mongoose';
 
-const schema = mongoose.Schema(
+const subCatgoryschema = mongoose.Schema(
   {
     name: {
       type: String,
-      unique: [true, "name is required"],
+      unique: [true, 'name is required'],
       trim: true,
       required: true,
-      minLength: [2, "too short category name"],
+      minLength: [2, 'too short category name'],
     },
     slug: {
       type: String,
@@ -16,11 +16,11 @@ const schema = mongoose.Schema(
     },
     category: {
       type: Types.ObjectId,
-      ref: "Category",
+      ref: 'Category',
     },
     createdBy: {
       type: Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
   },
   {
@@ -29,4 +29,4 @@ const schema = mongoose.Schema(
   }
 );
 
-export const SubCategory = mongoose.model("SubCategory", schema);
+export default mongoose.model('SubCategory', subCatgoryschema);

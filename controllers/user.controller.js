@@ -1,208 +1,240 @@
 import asyncHandler from 'express-async-handler';
-import User from '../models/User.model.js';
+import sendEmail from '../utils/sendEmail.js';
+import emailTemplate from '../utils/emailTemplate.js';
+import generateToken from '../utils/Token.js';
 import ApiError from '../utils/apiError.js';
-
-// Helper function to filter object
-const filterObj = (obj, ...allowedFields) => {
-  const newObj = {};
-  Object.keys(obj).forEach(el => {
-    if (allowedFields.includes(el)) newObj[el] = obj[el];
-  });
-  return newObj;
-};
-
-/**
- * @desc    Get all users
- * @route   GET /api/users
- * @access  Private/Admin
- */
-const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find();
-
-  res.status(200).json({
-    status: 'success',
-    results: users.length,
-    data: users,
-  });
-});
-
-/**
- * @desc    Get specific user
- * @route   GET /api/users/:id
- * @access  Private/Admin
- */
-const getUser = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
-
-  if (!user) {
-    return next(new ApiError('User not found', 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: user,
-  });
-});
+import UserModel from '../models/User.model.js';
 
 /**
  * @desc    Create new user
- * @route   POST /api/users
+ * @route   POST /api/v1/users
  * @access  Private/Admin
  */
 const createUser = asyncHandler(async (req, res, next) => {
-  // Create user
-  const user = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-    role: req.body.role,
-    profileImage: req.body.profileImage,
-  });
+  const { email } = req.body;
+  const existingUser = await UserModel.findOne({ email });
 
-  // Remove password from output
-  user.password = undefined;
+  if (existingUser) {
+    return next(new ApiError('Email is already in use', 400));
+  }
+
+  const user = await UserModel.create(req.body);
+  sendEmail({
+    email: req.body.email,
+    subject: 'Verification Email',
+    html: emailTemplate(generateToken(email)),
+  });
 
   res.status(201).json({
-    status: 'success',
-    data: user,
+    message: 'success',
+    user,
   });
 });
 
 /**
- * @desc    Update user
- * @route   PUT /api/users/:id
+ * @desc    Get specific user by id
+ * @route   GET /api/v1/users/:id
+ * @access  Private
+ */
+const getUser = asyncHandler(async (req, res, next) => {
+  const user = await UserModel.findById(req.params.id).populate({
+    path: 'interests',
+    select: 'name image status',
+  });
+  if (!user) {
+    return next(new Error('User not found', 404));
+  }
+  res.status(200).json({
+    message: 'success',
+    user,
+  });
+});
+
+/**
+ * @desc    Get all users
+ * @route   GET /api/v1/users
  * @access  Private/Admin
+ */
+const getAllUsers = asyncHandler(async (req, res, next) => {
+  const users = await UserModel.find().populate({
+    path: 'interests',
+    select: 'name image status',
+  });
+  res.status(200).json({
+    message: 'success',
+    users,
+  });
+});
+
+/**
+ * @desc    Update specific user
+ * @route   PUT /api/v1/users/:id
+ * @access  Private
  */
 const updateUser = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
-
-  if (!user) {
-    return next(new ApiError('User not found', 404));
-  }
-
-  // Handle profile image if provided
-  if (req.file) {
-    req.body.profileImage = req.file.path;
-  }
-
-  // Prevent password update through this route
-  if (req.body.password) {
-    return next(
-      new ApiError(
-        'This route is not for password updates. Please use /updatePassword.',
-        400
-      )
-    );
-  }
-
-  // Update user
-  Object.assign(user, req.body);
-  await user.save();
-
-  res.status(200).json({
-    status: 'success',
-    data: user,
-  });
-});
-
-/**
- * @desc    Delete user
- * @route   DELETE /api/users/:id
- * @access  Private/Admin
- */
-const deleteUser = asyncHandler(async (req, res, next) => {
-  const user = await User.findByIdAndDelete(req.params.id);
-
-  if (!user) {
-    return next(new ApiError('User not found', 404));
-  }
-
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
-});
-
-/**
- * @desc    Get logged user data
- * @route   GET /api/users/me
- * @access  Private
- */
-const getMe = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.user._id);
-
-  res.status(200).json({
-    status: 'success',
-    data: user,
-  });
-});
-
-/**
- * @desc    Update logged user password
- * @route   PUT /api/users/updateMyPassword
- * @access  Private
- */
-const updateMyPassword = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.user._id).select('+password');
-
-  // Check current password
-  if (!(await user.comparePassword(req.body.currentPassword))) {
-    return next(new ApiError('Your current password is incorrect', 401));
-  }
-
-  // Update password
-  user.password = req.body.newPassword;
-  await user.save();
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Password updated successfully',
-  });
-});
-
-/**
- * @desc    Update logged user data
- * @route   PUT /api/users/updateMe
- * @access  Private
- */
-const updateMe = asyncHandler(async (req, res, next) => {
-  // Prevent password update through this route
-  if (req.body.password) {
-    return next(
-      new ApiError(
-        'This route is not for password updates. Please use /updateMyPassword.',
-        400
-      )
-    );
-  }
-
-  // Filter unwanted fields that are not allowed to be updated
-  const filteredBody = filterObj(req.body, 'name', 'email', 'profileImage');
-
-  // Handle profile image if provided
-  if (req.file) {
-    filteredBody.profileImage = req.file.path;
-  }
-
-  // Update user
-  const updatedUser = await User.findByIdAndUpdate(req.user._id, filteredBody, {
+  const { id } = req.params;
+  const user = await UserModel.findByIdAndUpdate(id, req.body, {
     new: true,
     runValidators: true,
   });
+  if (!user) {
+    return next(new ApiError(`There is no user with ID ${id}`, 404));
+  }
+
+  res.status(200).json({ message: 'success', user: user });
+});
+
+/**
+ * @desc    Delete specific user
+ * @route   DELETE /api/v1/users/:id
+ * @access  Private/Admin
+ */
+const deleteUser = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const user = await UserModel.findByIdAndDelete(id);
+
+  if (!user) {
+    return next(new ApiError(`There isn't a user for this ${id}`, 404));
+  }
+
+  res.status(200).json({ message: 'success', user: user });
+});
+
+/**
+ * @desc    Get current logged in user
+ * @route   GET /api/v1/users/me
+ * @access  Private
+ */
+const getMe = asyncHandler(async (req, res, next) => {
+  const user = await UserModel.findById(req.user._id)
+    .populate({
+      path: 'interests',
+      select: 'name image status',
+    })
+    .populate({
+      path: 'ratings',
+      select: '-__v -createdAt -updatedAt -ratedUser',
+      populate: {
+        path: 'ratedBy',
+        select: 'name profileImage -_id',
+      },
+    });
+  res.status(200).json({
+    message: 'success',
+    user,
+  });
+});
+
+/**
+ * @desc    Update current logged in user
+ * @route   PUT /api/v1/users/me
+ * @access  Private
+ */
+const updateMe = asyncHandler(async (req, res, next) => {
+  // First find the user to verify current state
+  const currentUser = await UserModel.findById(req.user._id);
+  if (!currentUser) {
+    return next(new ApiError('User not found', 404));
+  }
+  const user = await UserModel.findByIdAndUpdate(req.user._id, req.body, {
+    new: true,
+    runValidators: true,
+  })
+    .select('-password -__v -createdAt -updatedAt')
+    .populate({
+      path: 'interests',
+      select: 'name image status',
+    });
 
   res.status(200).json({
-    status: 'success',
-    data: updatedUser,
+    message: 'success',
+    user,
+  });
+});
+
+const uploadUserImage = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ApiError('please upload imageCover', 404));
+  }
+  req.body.profileImage = req.file.path;
+  const user = await UserModel.findByIdAndUpdate(
+    req.user._id,
+    { profileImage: req.body.profileImage },
+    { new: true, runValidators: true }
+  );
+  res.status(200).json({
+    message: 'success',
+    user,
+  });
+});
+
+/**
+ * @desc    Change current user password
+ * @route   PATCH /api/v1/users/changePassword
+ * @access  Private
+ */
+const changeMyPassword = asyncHandler(async (req, res, next) => {
+  const { currentPassword, password } = req.body;
+
+  // 1) Get user from database
+  const user = await UserModel.findById(req.user._id).select('+password');
+
+  // 2) Check if current password is correct
+  const isPasswordCorrect = await user.comparePassword(currentPassword);
+  if (!isPasswordCorrect) {
+    return next(new ApiError('Current password is incorrect', 401));
+  }
+
+  // 3) Update password
+  user.password = password;
+  user.passwordChangedAt = Date.now();
+  await user.save();
+
+  // 4) Generate token
+  const token = generateToken(user._id);
+
+  // 5) Return response
+  res.status(200).json({
+    message: 'success',
+    token,
+  });
+});
+
+/**
+ * @desc    Change password for specific user (Admin only)
+ * @route   PATCH /api/v1/users/changePassword/:id
+ * @access  Private/Admin
+ */
+const changeUserPassword = asyncHandler(async (req, res, next) => {
+  const { password } = req.body;
+  const { id } = req.params;
+
+  // 1) Get user from database
+  const user = await UserModel.findById(id);
+  if (!user) {
+    return next(new ApiError(`User with ID ${id} not found`, 404));
+  }
+
+  // 2) Update password
+  user.password = password;
+  user.passwordChangedAt = Date.now();
+  await user.save();
+
+  // 3) Return response
+  res.status(200).json({
+    message: 'success',
   });
 });
 
 export {
-  getUsers,
-  getUser,
   createUser,
+  getAllUsers,
+  getUser,
   updateUser,
   deleteUser,
   getMe,
   updateMe,
-  updateMyPassword,
+  uploadUserImage,
+  changeMyPassword,
+  changeUserPassword,
 };

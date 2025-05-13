@@ -1,23 +1,29 @@
-import { Router } from "express";
+import express from 'express';
+import { protectedRoutes } from '../controllers/auth.controller.js';
 import {
-  addSubCategory,
+  createFilterObj,
+  createSubCategory,
+  deleteSpecificSubCategory,
   getAllSubCategories,
   getSpecificSubCategory,
-  updateSubCategory,
-  deleteSubCategory,
-} from "../controllers/subcategory.controller.js";
-import { checkCategoryExists } from "../middlewares/checkCategoryExists.js";
-import { protectedRoutes } from "../auth/auth.controller.js";
+  setCategoryIdToBody,
+  updateSpecificSubCategory,
+} from '../controllers/subcategory.controller.js';
 
-const subCategoryRouter = Router({ mergeParams: true });
-subCategoryRouter
-  .route("/")
-  .post(protectedRoutes, checkCategoryExists, addSubCategory)
-  .get(getAllSubCategories);
-subCategoryRouter
-  .route("/:id")
+const subCategoryRouter = express.Router({ mergeParams: true });
+
+// mergeParams: Allow us to access parameters on other routers
+// ex: We need to access categoryId from category router
+const router = express.Router({ mergeParams: true });
+
+router
+  .route('/')
+  .post(protectedRoutes, setCategoryIdToBody, createSubCategory)
+  .get(createFilterObj, getAllSubCategories);
+router
+  .route('/:id')
   .get(getSpecificSubCategory)
-  .put(protectedRoutes, checkCategoryExists, updateSubCategory)
-  .delete(protectedRoutes, checkCategoryExists, deleteSubCategory);
+  .put(protectedRoutes, updateSpecificSubCategory)
+  .delete(protectedRoutes, deleteSpecificSubCategory);
 
 export default subCategoryRouter;

@@ -10,21 +10,21 @@ import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
 
 const upload = createUploader();
-const router = express.Router();
+const brandRouter = express.Router();
 
 // Public routes
-router.get('/', getBrands);
-router.get('/:id', getBrand);
+brandRouter.get('/', getBrands);
+brandRouter.get('/:id', getBrand);
 
 // Protected routes (Admin only)
-router.use(protectedRoutes);
+brandRouter.use(protectedRoutes);
 // router.use(allowTo('admin'));
 
-router.route('/').post(upload.single('logo'), createBrand);
+brandRouter.route('/').post(upload.single('logo'), createBrand);
 
-router
+brandRouter
   .route('/:id')
   .put(upload.single('logo'), updateBrand)
   .delete(deleteBrand);
 
-export default router;
+export default brandRouter;

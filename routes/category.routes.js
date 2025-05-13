@@ -7,22 +7,24 @@ import {
   deleteCategory,
 } from '../controllers/category.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
+import createUploader from '../middlewares/cloudnairyMiddleware.js';
+import subCategoryRouter from './subcategory.routes.js';
 
-const router = express.Router();
+const categoryRouter = express.Router();
 
+categoryRouter.use('/:categoryId/subcategories', subCategoryRouter);
+const upload = createUploader();
 // Public routes
-router.get('/', getCategories);
-router.get('/:id', getCategory);
+categoryRouter.get('/', getCategories);
+categoryRouter.get('/:id', getCategory);
 
-// Protected routes (Admin only)
-router.use(protectedRoutes);
-router.use(allowTo('admin'));
+categoryRouter.use(protectedRoutes);
 
-router.route('/').post(uploadSingleImage('imageCover'), createCategory);
+categoryRouter.route('/').post(upload.single('imageCover'),createCategory);
 
-router
+categoryRouter
   .route('/:id')
-  .put(uploadSingleImage('imageCover'), updateCategory)
+  .put(upload.single('imageCover'), updateCategory)
   .delete(deleteCategory);
 
-export default router;
+export default categoryRouter;

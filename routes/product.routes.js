@@ -1,9 +1,10 @@
 import express from 'express';
 import {
-  createProduct,
-  deleteProduct,
   getAllProduct,
+  getSpecificProduct,
+  createProduct,
   updateProduct,
+  deleteProduct,
 } from '../controllers/product.controller.js';
 import { protectedRoutes } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -24,6 +25,7 @@ productRouter
 
 productRouter
   .route('/:id')
+  .get(getSpecificProduct)
   .delete(protectedRoutes, deleteProduct)
   .put(
     protectedRoutes,

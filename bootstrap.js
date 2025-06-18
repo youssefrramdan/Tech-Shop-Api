@@ -6,12 +6,12 @@ import subCategoryRouter from './routes/subcategory.routes.js';
 import userRouter from './routes/user.routes.js';
 
 const bootstrap = app => {
-  app.use('/api/subcategories', subCategoryRouter);
-  app.use('/api/categories', categoryRouter);
-  app.use('/api/products', productRouter);
-  app.use('/api/users', userRouter);
-  app.use('/api/auth', authRouter);
-  app.use('/api/brand', brandRouter);
+  app.use('/api/v1/subcategories', subCategoryRouter);
+  app.use('/api/v1/categories', categoryRouter);
+  app.use('/api/v1/products', productRouter);
+  app.use('/api/v1/users', userRouter);
+  app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/brand', brandRouter);
   //   app.use("/api/coupons" ,couponRouter)
   //   app.use("/api/carts" ,cartRouter)
   //   app.use("/api/orders" ,orderRouter)

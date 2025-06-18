@@ -1,0 +1,1447 @@
+{
+	"info": {
+		"_postman_id": "5fe9bea5-3a89-46e0-adca-72d892d9dcb1",
+		"name": "index-project",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34651419",
+		"_collection_link": "https://pflow-api.postman.co/workspace/Gradutrion-Team-Workspace~08a56819-e2f9-4236-8037-ed1f17be8aab/collection/34651419-5fe9bea5-3a89-46e0-adca-72d892d9dcb1?action=share&source=collection_link&creator=34651419"
+	},
+	"item": [
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Add User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"admin@example.com\",\r\n  \"name\": \"admin\",\r\n  \"role\": \"admin\",\r\n  \"password\": \"123456789\",\r\n  \"rePassword\": \"123456789\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/users",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/api/v1/users",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{URL}}/api/v1/users/:id",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Data",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"drugs\" : []\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/users/6814faa240535e6a8f272ed3",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"6814faa240535e6a8f272ed3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change User Password",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"password\": \"newpassword123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/users/changePassword/:id",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"changePassword",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{URL}}/api/v1/users/681bff1dec6f36308a643806",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"681bff1dec6f36308a643806"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"JWT\",pm.response.json().token)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"rmdanyoussef01@gmail.com\",\r\n  \"name\": \"Youssef Ramadan\",\r\n  \"ownerName\": \"Owner\",\r\n  \"phone\": \"01234567890\",\r\n  \"role\": \"pharmacy\",\r\n  \"city\": \"City\",\r\n  \"location\": {\r\n    \"type\": \"Point\",\r\n    \"coordinates\": [29.1000, 25.1167]\r\n  },\r\n  \"governorate\": \"Governorate\",\r\n  \"registrationNumber\": \"1234516171189\",\r\n  \"identificationNumber\": \"9871615413121\",\r\n  \"password\": \"123456789\",\r\n  \"rePassword\": \"123456789\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/auth/signup",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"JWT\",pm.response.json().token)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// pharmachy\r\n{\r\n  \"email\": \"rmdanyoussef01@gmail.com\",\r\n  \"password\": \"123456789\",\r\n   \"fcmToken\" :\"eYwrENvXSzQkkzrPN22oR0:APA91bEQNkDa2bfksMdfnI75Jaudr11BdvtbDxopphOGJgrHeyJJ4MYpDePG0OLl8nOr6PYf_18uC3Jll5lg4nmHUI_8aBHsNFELJaRgNVH27Gx2wAAM9Jw\"\r\n\r\n}\r\n\r\n// inventory\r\n// {\r\n//   \"email\": \"rmdanyoussef2@gmail.com\",\r\n//   \"password\": \"123456789\",\r\n//    \"fcmToken\" :\"cpxejH2vK1RwXoumhrtwKG:APA91bExzMeZD9sXLX4rF3FDnyBNsINTzDAWqw_zXloyVw6Fiz9mUVVfBtPp2-moLnVnZnW7rQ_xId3Pdsc0JCiG92i6aWkJpLzPQZtxwd69B4s3Il6ZLbQ\"\r\n\r\n// }\r\n\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/auth/login",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forget Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"user@example.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/auth/forgetpassword",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"forgetpassword"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Reset Code",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"resetCode\": \"123456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/auth/verifyResetCode",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"verifyResetCode"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"user@example.com\",\r\n    \"newPassword\": \"newpassword123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/auth/resetPassword",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"resetPassword"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Profile",
+			"item": [
+				{
+					"name": "Get Logged User Data",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{URL}}/api/v1/users/getMe",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"getMe"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Logged User Data",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"taxRate\": 20,\r\n    \"shippingPrice\": 100\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/users/updateMe",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"updateMe"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload User Image",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "profileImage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/users/profileimage",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"profileimage"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Logged User Password",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"oldPassword\": \"oldpassword123\",\r\n    \"newPassword\": \"newpassword123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/users/updateMyPassword",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"updateMyPassword"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activate Logged User",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{URL}}/api/v1/users/activateMe",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"activateMe"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate Logged User",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{URL}}/api/v1/users/deactivateMe",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"deactivateMe"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "categories",
+			"item": [
+				{
+					"name": "addcategory",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "113sfweqe1111q111123111131111",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": "postman-cloud:///1ef7f020-9aba-4240-9dd5-58dd62ebb2a9"
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": [
+										"/C:/Users/rmdan/OneDrive/Desktop/476279973_122204349272158976_7911578387952999827_n.jpg",
+										"/C:/Users/rmdan/OneDrive/Desktop/2.jpg",
+										"/C:/Users/rmdan/OneDrive/Desktop/349570897_757112449435466_4282212989436810777_n.jpg",
+										"/C:/Users/rmdan/OneDrive/Desktop/350138929_577424537712315_8821414506733489392_n.jpg",
+										"/C:/Users/rmdan/OneDrive/Desktop/400356008_10159372391307155_1499507572078204225_n.jpg",
+										"/C:/Users/rmdan/OneDrive/Desktop/481081743_1681332489480455_7489583779895878663_n.jpg",
+										"/C:/Users/rmdan/OneDrive/Desktop/481464952_982677870717964_628348477892078320_n.jpg"
+									],
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/categories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories"
+							]
+						},
+						"description": "### Add Category\n\nThis endpoint is used to add a new category.\n\n#### Request Body\n\n- `name`: (string) The name of the category to be added.\n    \n\n#### Response\n\nThe response will include the details of the newly added category."
+					},
+					"response": []
+				},
+				{
+					"name": "all categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/api/v1/categories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories"
+							]
+						},
+						"description": "This endpoint makes an HTTP GET request to retrieve a list of categories from the specified API. The request does not include a request body, as it is a simple GET request to fetch data.\n\n### Request Body\n\nThis request does not include a request body.\n\n### Response Body\n\nThe response will contain an array of categories, each with its own properties such as name, ID, and possibly other attributes. Consumers can use this endpoint to fetch the available categories for further use in their application."
+					},
+					"response": []
+				},
+				{
+					"name": "specific category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/api/v1/categories/api/v1/categories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories",
+								"api",
+								"v1",
+								"categories"
+							]
+						},
+						"description": "\n### Retrieve Category Details\n\nThis endpoint retrieves the details of a specific category with the ID \"6713ac2547e744eaf5044540\".\n\n#### Request Body\nThis request does not include a request body.\n\n#### Response Body\nThe response body will contain the details of the category, including the following information:\n- `id`: The ID of the category.\n- `name`: The name of the category.\n- `description`: The description of the category.\n- Any other relevant information related to the category.\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "update category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\" : \"clothesSSS\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/categories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories"
+							]
+						},
+						"description": "### Update Category\n\nThis endpoint is used to update categories by making an HTTP PUT request to the specified URL.\n\n**Request Body**\n\n- The request should include form-data with the necessary parameters to update the category.\n    \n\n**Response**\n\n- The response will contain the updated category details."
+					},
+					"response": []
+				},
+				{
+					"name": "delete category",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/categories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories"
+							]
+						},
+						"description": "### Delete Category\n\nThis endpoint is used to delete a specific category.\n\n#### Request\n\n- Method: DELETE\n    \n- URL: `https://gcm.onrender.com/api/categories/670f74952c3ab2de17aba477`\n    \n- No request body is required for this endpoint.\n    \n\n#### Response\n\nThe response for this request is a JSON schema representing the success or failure of the deletion operation."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "subcategories",
+			"item": [
+				{
+					"name": "addSubCategory",
+					"request": {
+						"auth": {
+							"type": "jwt",
+							"jwt": [
+								{
+									"key": "secret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								},
+								{
+									"key": "payload",
+									"value": "{}",
+									"type": "string"
+								},
+								{
+									"key": "algorithm",
+									"value": "HS256",
+									"type": "string"
+								},
+								{
+									"key": "isSecretBase64Encoded",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "headerPrefix",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "queryParamKey",
+									"value": "token",
+									"type": "string"
+								},
+								{
+									"key": "header",
+									"value": "{}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"phonessar\",\r\n    \"category\":\"679d5245a18e2d4db523f08a\"\r\n}   ",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/subcategories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"subcategories"
+							]
+						},
+						"description": "\n### Create Subcategory\nThis endpoint allows you to create a new subcategory.\n\n#### Request Body\n- `name` (string, required): The name of the subcategory.\n- `category` (string, required): The ID of the category to which the subcategory belongs.\n\nExample:\n```json\n{\n  \"name\": \"phones\",\n  \"category\": \"6713cea259748e44c9e6fe46\"\n}\n\n#### Response\nThe response will be a JSON object conforming to the following schema:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"id\": {\n      \"type\": \"string\"\n    },\n    \"name\": {\n      \"type\": \"string\"\n    },\n    \"category\": {\n      \"type\": \"string\"\n    }\n  }\n}\n"
+					},
+					"response": []
+				},
+				{
+					"name": "all SubCategories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/api/v1/subcategories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"subcategories"
+							]
+						},
+						"description": "\n### Retrieve Subcategories\n\nThis endpoint makes an HTTP GET request to retrieve a list of subcategories from the server.\n\n#### Request Body\nThis request does not require a request body.\n\n#### Response Body\nThe response contains an array of subcategory objects, each including details such as subcategory ID, name, and description.\n\nExample response body:\n```json\n[\n    {\n        \"id\": \"123\",\n        \"name\": \"Subcategory 1\",\n        \"description\": \"Description of subcategory 1\"\n    },\n    {\n        \"id\": \"456\",\n        \"name\": \"Subcategory 2\",\n        \"description\": \"Description of subcategory 2\"\n    }\n]\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "specific SubCategory",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/subcategories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"subcategories"
+							]
+						},
+						"description": "\nThis endpoint retrieves the subcategories associated with a specific category ID. The response for this request is provided in JSON format, and the schema for the JSON response is as follows:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"subcategories\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"id\": {\n            \"type\": \"string\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "update SubCategory",
+					"request": {
+						"auth": {
+							"type": "jwt",
+							"jwt": [
+								{
+									"key": "secret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								},
+								{
+									"key": "payload",
+									"value": "{}",
+									"type": "string"
+								},
+								{
+									"key": "algorithm",
+									"value": "HS256",
+									"type": "string"
+								},
+								{
+									"key": "isSecretBase64Encoded",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "headerPrefix",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "queryParamKey",
+									"value": "token",
+									"type": "string"
+								},
+								{
+									"key": "header",
+									"value": "{}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"playstations22\",\r\n    \"category\":\"6797aae437c53affcd567ec3\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/subcategories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"subcategories"
+							]
+						},
+						"description": "\n### Update Subcategory\nThis endpoint is used to update a specific subcategory.\n\n#### Request\n- Method: PUT\n- URL: `https://gcm.onrender.com/api/subcategories/670f769847b57a3062ecb702`\n- Body:\n  ```json\n  {\n    \"name\": \"playstations22\",\n    \"category\": \"670f765547b57a3062ecb6fe\"\n  }\n  ```\n\n#### Response\nThe response for this request will be a JSON object following the schema below:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    },\n    \"updatedSubcategory\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"category\": {\n          \"type\": \"string\"\n        }\n      }\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "delete SubCategory",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/subcategories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"subcategories"
+							]
+						},
+						"description": "### Delete Subcategory\n\nThis endpoint is used to delete a specific subcategory.\n\n#### Request\n\n- Method: DELETE\n    \n- URL: `https://gcm.onrender.com/api/subcategories/670f769847b57a3062ecb702`\n    \n- Body: x-www-form-urlencoded\n    \n    - No parameters\n        \n\n#### Response\n\nThe response for this request is a JSON schema with the following properties:\n\n- `status`: (string) The status of the response.\n    \n- `message`: (string) A message indicating the result of the deletion operation."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Categories/subs",
+			"item": [
+				{
+					"name": "Get list of subcategories for specific category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/api/v1/categories/6797aae437c53affcd567ec3/subcategories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories",
+								"6797aae437c53affcd567ec3",
+								"subcategories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create subcategory on category",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\" : \"ahmed\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/categories/6797aae437c53affcd567ec3/subcategories",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories",
+								"6797aae437c53affcd567ec3",
+								"subcategories"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "brands",
+			"item": [
+				{
+					"name": "addBrand",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "gghlaff21223ad122322112",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/C:/Users/rmdan/OneDrive/Desktop/473370957_1050177453815495_8028592809343127759_n.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/brands",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"brands"
+							]
+						},
+						"description": "\n### Add Brand\nThis endpoint allows the user to add a new brand by sending a POST request to the specified URL.\n\n#### Request Body\n- `name` (text): A string parameter representing the name of the brand.\n- `logo` (file): An image file representing the logo of the brand.\n\n#### Response\nUpon successful creation of the brand, the API returns a status code of 201 and a JSON object with the following fields:\n- `message`: A message indicating the success of the operation.\n- `brand`:\n  - `name`: The name of the brand.\n  - `slug`: The slug of the brand.\n  - `logo`: The URL or path to the logo of the brand.\n  - `_id`: The unique identifier of the brand.\n  - `createdAt`: The timestamp of the brand's creation.\n  - `updatedAt`: The timestamp of the brand's last update.\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "all brands",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/api/v1/brands",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"brands"
+							]
+						},
+						"description": "\n# Retrieve Brand Information\n\nThis endpoint allows you to retrieve a list of brand information.\n\n## Request\n\n### Endpoint\n\n`GET` https://gcm.onrender.com/api/brand\n\n## Response\n\n- Status: 200\n- Content-Type: application/json\n\nExample response body:\n```json\n{\n    \"message\": \"\",\n    \"brands\": [\n        {\n            \"_id\": \"\",\n            \"name\": \"\",\n            \"slug\": \"\",\n            \"createdAt\": \"\",\n            \"updatedAt\": \"\"\n        }\n    ]\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "specific brand",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/api/v1/brands",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"brands"
+							]
+						},
+						"description": "### Get Brand Details\n\nThis endpoint retrieves the details of a specific brand.\n\n#### Request\n\n- Method: GET\n    \n- URL: `https://gcm.onrender.com/api/brand/671016fc59d08dbe420ab5e1`\n    \n\n#### Response\n\n- Status: 200\n    \n- Content-Type: application/json\n    \n- Body:\n    \n    ``` json\n      {\n          \"message\": \"\",\n          \"brand\": {\n              \"_id\": \"\",\n              \"name\": \"\",\n              \"slug\": \"\",\n              \"logo\": \"\",\n              \"createdAt\": \"\",\n              \"updatedAt\": \"\"\n          }\n      }\n    \n     ```"
+					},
+					"response": []
+				},
+				{
+					"name": "update brand",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"hello\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/brands/679d3d012c6b4f6cc1f47c5f",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"brands",
+								"679d3d012c6b4f6cc1f47c5f"
+							]
+						},
+						"description": "\n### Update Brand Details\nThis endpoint is used to update the details of a specific brand.\n\n#### Request\n- Method: PUT\n- URL: `https://gcm.onrender.com/api/brand/671016fc59d08dbe420ab5e1`\n- Body:\n  - name (text, required): The new name for the brand.\n\n#### Response\nThe response schema for this request is as follows:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "delete brand",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"playstations22\",\r\n    \"category\":\"670d2303f51971beac8b932f\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/brands",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"brands"
+							]
+						},
+						"description": "This API endpoint sends an HTTP DELETE request to [https://gcm.onrender.com/api/brand/671016fc59d08dbe420ab5e1](https://gcm.onrender.com/api/brand/671016fc59d08dbe420ab5e1) to delete a specific brand. The request payload includes the name and category of the brand to be deleted.\n\n### Response\n\nThe response of this request is a JSON schema, which describes the structure of the response data in a JSON format. The schema will outline the properties and their types that can be expected in the response after successfully deleting the brand."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "products",
+			"item": [
+				{
+					"name": "add product",
+					"request": {
+						"auth": {
+							"type": "jwt",
+							"jwt": [
+								{
+									"key": "secret",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								},
+								{
+									"key": "payload",
+									"value": "{}",
+									"type": "string"
+								},
+								{
+									"key": "algorithm",
+									"value": "HS256",
+									"type": "string"
+								},
+								{
+									"key": "isSecretBase64Encoded",
+									"value": false,
+									"type": "boolean"
+								},
+								{
+									"key": "headerPrefix",
+									"value": "Bearer",
+									"type": "string"
+								},
+								{
+									"key": "queryParamKey",
+									"value": "token",
+									"type": "string"
+								},
+								{
+									"key": "header",
+									"value": "{}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n  {\r\n    \"title\": \"Fjallravens Foldsack No. 1 Backpack, Fits 15 Laptops\",\r\n    \"quantity\": 10,\r\n    \"sold\": 25,\r\n    \"price\": 109.95,\r\n    \"priceAfterDiscount\": 100,\r\n    \"description\": \"Your perfect pack for everyday use and walks in the forest. Stash your laptop (up to 15 inches) in the padded sleeve, your everyday\",\r\n    \"category\": \"679ccff2b3d57c82419965c8\",\r\n    \"subcategories\" : [\"679cd022b3d57c82419965dd\" , \"679cd01bb3d57c82419965d7\"],\r\n    \"imageCover\": \"https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg\",\r\n    \"ratingsAverage\": 4.3,\r\n    \"ratingsQuantity\": 20\r\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/products",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							]
+						},
+						"description": "### Add Product\n\nThis endpoint allows you to add a new product to the system.\n\n#### Request Body\n\n- `priceAfterDiscount` (text): The discounted price of the product.\n    \n- `category` (text): The category to which the product belongs.\n    \n- `images` (file): The images of the product.\n    \n- `imageCover` (file): The cover image of the product.\n    \n\n#### Response\n\nUpon successful addition of the product, the response will include the details of the newly added product."
+					},
+					"response": []
+				},
+				{
+					"name": "all product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/api/v1/products",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							],
+							"query": [
+								{
+									"key": "ratingsAverage[lte]",
+									"value": "4.9",
+									"disabled": true
+								},
+								{
+									"key": "price[lte]",
+									"value": "15",
+									"disabled": true
+								}
+							]
+						},
+						"description": "\n### Get Products\n\nThis endpoint makes an HTTP GET request to retrieve a list of products from the server.\n\n#### Response\nThe response of this request is a JSON object representing the list of products. The JSON schema for the response can be described as follows:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"products\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"id\": {\n            \"type\": \"string\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"price\": {\n            \"type\": \"number\"\n          },\n          \"category\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\"id\", \"name\", \"price\", \"category\"]\n      }\n    }\n  }\n}\n```\n\nThis JSON schema defines an object with a \"products\" property, which is an array of product objects. Each product object has properties such as \"id\", \"name\", \"price\", and \"category\", all of which are required.\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "specific product",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/products",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							]
+						},
+						"description": "\n### Get Product Details\nThis endpoint retrieves the details of a specific product identified by the unique ID in the URL.\n\n#### Request Body\nThis request does not require a request body.\n\n#### Response Body\n- `id`: (string) The unique identifier of the product.\n- `name`: (string) The name of the product.\n- `description`: (string) The description of the product.\n- `price`: (number) The price of the product.\n- `category`: (string) The category of the product.\n- `image_url`: (string) The URL of the product image.\n\nThe response contains the details of the product including its name, description, price, category, and image URL.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "update product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"price\" : \"200\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/api/v1/products",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							]
+						},
+						"description": "\nThe API updates a specific product with the given ID using an HTTP PUT request to the specified endpoint.\n\n### Request Body\nThe request body should be of form-data type and include the following parameters:\n- `imageCover` (file): The main image of the product.\n- `images` (file): Additional images of the product.\n\n### Response\nThe response of this request is documented as a JSON schema.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "delete product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{URL}}/api/v1/products",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products"
+							]
+						},
+						"description": "\n### Delete Product\nThis endpoint is used to delete a specific product by providing the product ID in the URL.\n\n#### Request Body\nThis request does not require a request body.\n\n#### Response\nThis request does not have a response body. The response will indicate the success or failure of the delete operation.\n"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -143,7 +143,7 @@ const deleteProduct = asyncHandler(async (req, res, next) => {
 // @desc    Get all rentable products
 // @route   GET /api/v1/products/rentable
 // @access  Public
-export const getRentableProducts = asyncHandler(async (req, res) => {
+const getRentableProducts = asyncHandler(async (req, res) => {
   const rentableProducts = await ProductModel.find({ isRentable: true })
     .populate({ path: 'category', select: 'name' })
     .populate({ path: 'brand', select: 'name' });

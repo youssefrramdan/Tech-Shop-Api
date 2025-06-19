@@ -5,12 +5,21 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  getProductsByCategory,
+  getFeaturedProducts,
 } from '../controllers/product.controller.js';
 import { protectedRoutes } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
 
 const productRouter = express.Router();
 const upload = createUploader();
+
+// Featured products route (should come before /:id route)
+productRouter.get('/featured', getFeaturedProducts);
+
+// Products by category
+productRouter.get('/category/:categoryId', getProductsByCategory);
+
 productRouter
   .route('/')
   .get(getAllProduct)

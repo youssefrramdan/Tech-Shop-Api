@@ -24,6 +24,10 @@ const categorySchema = new mongoose.Schema(
       type: String,
       required: [true, 'Category cover image is required'],
     },
+    icon: {
+      type: String,
+      default: 'default-icon', // Default icon if none specified
+    },
   },
   {
     timestamps: true,

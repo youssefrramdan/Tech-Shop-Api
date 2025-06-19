@@ -5,6 +5,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  getRentableProducts,
 } from '../controllers/product.controller.js';
 import { protectedRoutes } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -35,5 +36,7 @@ productRouter
     ]),
     updateProduct
   );
+
+productRouter.get('/rentable', getRentableProducts);
 
 export default productRouter;

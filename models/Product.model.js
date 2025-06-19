@@ -72,6 +72,37 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    isRentable: {
+      type: Boolean,
+      default: false,
+    },
+    rentalPricePerDay: {
+      type: Number,
+      min: [0, 'Rental price cannot be negative'],
+      validate: {
+        validator: function (value) {
+          return !this.isRentable || (this.isRentable && value > 0);
+        },
+        message: 'Rental price is required for rentable products',
+      },
+    },
+    minimumRentalDays: {
+      type: Number,
+      min: [1, 'Minimum rental days must be at least 1'],
+      default: 1,
+    },
+    maximumRentalDays: {
+      type: Number,
+      min: [1, 'Maximum rental days must be at least 1'],
+      default: 30,
+    },
+    availableForRent: {
+      type: Number,
+      min: [0, 'Available for rent cannot be negative'],
+      default: function () {
+        return this.isRentable ? this.stock : 0;
+      },
+    },
   },
   {
     timestamps: true,

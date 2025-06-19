@@ -139,10 +139,27 @@ const deleteProduct = asyncHandler(async (req, res, next) => {
     data: product,
   });
 });
+
+// @desc    Get all rentable products
+// @route   GET /api/v1/products/rentable
+// @access  Public
+export const getRentableProducts = asyncHandler(async (req, res) => {
+  const rentableProducts = await ProductModel.find({ isRentable: true })
+    .populate({ path: 'category', select: 'name' })
+    .populate({ path: 'brand', select: 'name' });
+
+  res.status(200).json({
+    status: 'success',
+    results: rentableProducts.length,
+    data: rentableProducts,
+  });
+});
+
 export {
   getAllProduct,
   getSpecificProduct,
   createProduct,
   updateProduct,
   deleteProduct,
+  getRentableProducts,
 };

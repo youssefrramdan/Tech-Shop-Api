@@ -37,6 +37,4 @@ productRouter
     updateProduct
   );
 
-productRouter.get('/rentable', getRentableProducts);
-
 export default productRouter;

@@ -34,7 +34,7 @@ const createCategory = asyncHandler(async (req, res, next) => {
  * @access  Public
  */
 const getCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.find();
+  const categories = await Category.find().populate('productsCount');
 
   res.status(200).json({
     status: 'success',

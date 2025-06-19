@@ -28,8 +28,18 @@ const categorySchema = new mongoose.Schema(
   {
     timestamps: true,
     versionKey: false,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+// Virtual field to get products count
+categorySchema.virtual('productsCount', {
+  ref: 'Product',
+  localField: '_id',
+  foreignField: 'category',
+  count: true,
+});
 
 // Create slug from name before saving
 categorySchema.pre('save', function (next) {

@@ -8,19 +8,37 @@ import ApiError from '../utils/apiError.js';
 // @route    GET /api/v1/products
 // @access   Public
 const getAllProduct = asyncHandler(async (req, res) => {
-  // 1) Filtering
+  // 1) Basic Filtering
   const query = { ...req.query };
-  const excludesFields = ['page', 'limit', 'skip', 'fields', 'sort', 'keyword'];
+  const excludesFields = [
+    'page',
+    'limit',
+    'skip',
+    'fields',
+    'sort',
+    'keyword',
+    'price',
+    'rating',
+  ];
   excludesFields.forEach(field => delete query[field]);
 
+  // 2) Advanced Filtering
   let queryStr = JSON.stringify(query);
   queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
-  // Convert queryStr back to object
-  const filters = JSON.parse(queryStr);
+  let filters = JSON.parse(queryStr);
 
-  // 3) filters by [gt|gte|lt|lte|in]
-  let mongooseQuery = ProductModel.find(filters);
-  // 4) Searching By specific keyword
+  // 3) Price Range Filter
+  if (req.query.price) {
+    const [min, max] = req.query.price.split(',').map(Number);
+    filters.price = { $gte: min, $lte: max };
+  }
+
+  // 4) Rating Filter
+  if (req.query.rating) {
+    filters.ratingsAverage = { $gte: parseFloat(req.query.rating) };
+  }
+
+  // 5) Search Query
   if (req.query.keyword) {
     const searchQuery = {
       $or: [
@@ -28,9 +46,15 @@ const getAllProduct = asyncHandler(async (req, res) => {
         { description: { $regex: req.query.keyword, $options: 'i' } },
       ],
     };
-    mongooseQuery = ProductModel.find(searchQuery);
+    filters = { ...filters, ...searchQuery };
   }
-  // 5) Sorting By specific property
+
+  // 6) Build Query
+  let mongooseQuery = ProductModel.find(filters)
+    .populate({ path: 'category', select: 'name' })
+    .populate({ path: 'brand', select: 'name' });
+
+  // 7) Sorting
   if (req.query.sort) {
     const sortBy = req.query.sort.split(',').join(' ');
     mongooseQuery = mongooseQuery.sort(sortBy);
@@ -38,7 +62,7 @@ const getAllProduct = asyncHandler(async (req, res) => {
     mongooseQuery = mongooseQuery.sort('-createdAt');
   }
 
-  // 4) Field selection
+  // 8) Field Limiting
   if (req.query.fields) {
     const fields = req.query.fields.split(',').join(' ');
     mongooseQuery = mongooseQuery.select(fields);
@@ -46,12 +70,24 @@ const getAllProduct = asyncHandler(async (req, res) => {
     mongooseQuery = mongooseQuery.select('-__v');
   }
 
-  // Execute query
-  const products = await mongooseQuery;
+  // 9) Pagination
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 12;
+  const skip = (page - 1) * limit;
+  mongooseQuery = mongooseQuery.skip(skip).limit(limit);
 
-  // Response
+  // 10) Execute Query
+  const [products, totalProducts] = await Promise.all([
+    mongooseQuery,
+    ProductModel.countDocuments(filters),
+  ]);
+
+  // 11) Response
   res.status(200).json({
-    message: 'success',
+    status: 'success',
+    results: products.length,
+    totalPages: Math.ceil(totalProducts / limit),
+    currentPage: page,
     data: products,
   });
 });

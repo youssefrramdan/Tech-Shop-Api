@@ -81,7 +81,17 @@ export const addToCart = asyncHandler(async (req, res, next) => {
   const populatedCart = await Cart.findById(cart._id).populate({
     path: 'cartItems.product',
     select:
-      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+      'name title imageCover brand category price priceAfterDiscount stock ratingsAverage description',
+    populate: [
+      {
+        path: 'category',
+        select: 'name',
+      },
+      {
+        path: 'brand',
+        select: 'name',
+      },
+    ],
   });
 
   res.status(200).json({
@@ -99,7 +109,17 @@ export const getLoggedUserCart = asyncHandler(async (req, res, next) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate({
     path: 'cartItems.product',
     select:
-      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+      'name title imageCover brand category price priceAfterDiscount stock ratingsAverage description',
+    populate: [
+      {
+        path: 'category',
+        select: 'name',
+      },
+      {
+        path: 'brand',
+        select: 'name',
+      },
+    ],
   });
 
   if (!cart) {
@@ -170,7 +190,17 @@ export const updateProductQuantity = asyncHandler(async (req, res, next) => {
   const updatedCart = await Cart.findById(cart._id).populate({
     path: 'cartItems.product',
     select:
-      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+      'name title imageCover brand category price priceAfterDiscount stock ratingsAverage description',
+    populate: [
+      {
+        path: 'category',
+        select: 'name',
+      },
+      {
+        path: 'brand',
+        select: 'name',
+      },
+    ],
   });
 
   res.status(200).json({
@@ -193,7 +223,17 @@ export const removeItemFromCart = asyncHandler(async (req, res, next) => {
   ).populate({
     path: 'cartItems.product',
     select:
-      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+      'name title imageCover brand category price priceAfterDiscount stock ratingsAverage description',
+    populate: [
+      {
+        path: 'category',
+        select: 'name',
+      },
+      {
+        path: 'brand',
+        select: 'name',
+      },
+    ],
   });
 
   if (!cart) {
@@ -251,7 +291,17 @@ export const applyCoupon = asyncHandler(async (req, res, next) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate({
     path: 'cartItems.product',
     select:
-      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+      'name title imageCover brand category price priceAfterDiscount stock ratingsAverage description',
+    populate: [
+      {
+        path: 'category',
+        select: 'name',
+      },
+      {
+        path: 'brand',
+        select: 'name',
+      },
+    ],
   });
 
   if (!cart) {
@@ -284,7 +334,17 @@ export const removeCoupon = asyncHandler(async (req, res, next) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate({
     path: 'cartItems.product',
     select:
-      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+      'name title imageCover brand category price priceAfterDiscount stock ratingsAverage description',
+    populate: [
+      {
+        path: 'category',
+        select: 'name',
+      },
+      {
+        path: 'brand',
+        select: 'name',
+      },
+    ],
   });
 
   if (!cart) {

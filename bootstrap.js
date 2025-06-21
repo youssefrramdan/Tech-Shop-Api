@@ -15,7 +15,7 @@ const bootstrap = app => {
   app.use('/api/v1/brand', brandRouter);
   app.use('/api/v1/wishlist', wishlistRouter);
   //   app.use("/api/coupons" ,couponRouter)
-  //   app.use("/api/carts" ,cartRouter)
+  app.use('/api/cart', cartRouter);
   //   app.use("/api/orders" ,orderRouter)
 };
 

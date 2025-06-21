@@ -37,10 +37,7 @@ const createUser = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 const getUser = asyncHandler(async (req, res, next) => {
-  const user = await UserModel.findById(req.params.id).populate({
-    path: 'interests',
-    select: 'name image status',
-  });
+  const user = await UserModel.findById(req.params.id);
   if (!user) {
     return next(new Error('User not found', 404));
   }
@@ -56,10 +53,7 @@ const getUser = asyncHandler(async (req, res, next) => {
  * @access  Private/Admin
  */
 const getAllUsers = asyncHandler(async (req, res, next) => {
-  const users = await UserModel.find().populate({
-    path: 'interests',
-    select: 'name image status',
-  });
+  const users = await UserModel.find();
   res.status(200).json({
     message: 'success',
     users,
@@ -106,19 +100,7 @@ const deleteUser = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 const getMe = asyncHandler(async (req, res, next) => {
-  const user = await UserModel.findById(req.user._id)
-    .populate({
-      path: 'interests',
-      select: 'name image status',
-    })
-    .populate({
-      path: 'ratings',
-      select: '-__v -createdAt -updatedAt -ratedUser',
-      populate: {
-        path: 'ratedBy',
-        select: 'name profileImage -_id',
-      },
-    });
+  const user = await UserModel.findById(req.user._id);
   res.status(200).json({
     message: 'success',
     user,
@@ -139,12 +121,7 @@ const updateMe = asyncHandler(async (req, res, next) => {
   const user = await UserModel.findByIdAndUpdate(req.user._id, req.body, {
     new: true,
     runValidators: true,
-  })
-    .select('-password -__v -createdAt -updatedAt')
-    .populate({
-      path: 'interests',
-      select: 'name image status',
-    });
+  }).select('-password -__v -createdAt -updatedAt');
 
   res.status(200).json({
     message: 'success',

@@ -212,20 +212,11 @@ const handleStripeWebhook = asyncHandler(async (req, res, next) => {
 const verifyPaymentSuccess = asyncHandler(async (req, res, next) => {
   const { sessionId } = req.params;
 
-  console.log('🔍 Verifying payment for session:', sessionId);
-
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-    console.log('💳 Session retrieved:', {
-      id: session.id,
-      payment_status: session.payment_status,
-      amount_total: session.amount_total,
-      metadata: session.metadata,
-    });
 
     if (session.payment_status === 'paid') {
       const { cartId, userId, shippingAddress } = session.metadata;
-      console.log('✅ Payment confirmed for:', { cartId, userId });
 
       // Check if order already exists
       const existingOrder = await Order.findOne({
@@ -234,11 +225,8 @@ const verifyPaymentSuccess = asyncHandler(async (req, res, next) => {
       });
 
       if (!existingOrder) {
-        console.log('🆕 Creating new order...');
         const cart = await Cart.findById(cartId).populate('cartItems.product');
         if (cart) {
-          console.log('🛒 Cart found with', cart.cartItems.length, 'items');
-
           const order = new Order({
             user: userId,
             OrderItems: cart.cartItems,
@@ -251,7 +239,6 @@ const verifyPaymentSuccess = asyncHandler(async (req, res, next) => {
           });
 
           await order.save();
-          console.log('✅ Order created successfully:', order._id);
 
           // Update product stock
           const options = cart.cartItems.map(item => ({
@@ -263,41 +250,28 @@ const verifyPaymentSuccess = asyncHandler(async (req, res, next) => {
 
           await Product.bulkWrite(options);
           await Cart.findByIdAndDelete(cartId);
-          console.log('🗑️ Cart deleted and stock updated');
 
           return res.status(200).json({
             message: 'Payment verified and order created successfully',
             success: true,
             order: order._id,
           });
-        } else {
-          console.log('❌ Cart not found:', cartId);
-          return res.status(404).json({
-            message: 'Cart not found',
-            success: false,
-          });
         }
-      } else {
-        console.log('ℹ️ Order already exists:', existingOrder._id);
-        return res.status(200).json({
-          message: 'Payment already processed',
-          success: true,
-          order: existingOrder._id,
-        });
       }
+
+      return res.status(200).json({
+        message: 'Payment already processed',
+        success: true,
+      });
     } else {
-      console.log('❌ Payment not completed. Status:', session.payment_status);
       return res.status(400).json({
         message: 'Payment not completed',
         success: false,
-        payment_status: session.payment_status,
       });
     }
   } catch (error) {
-    console.error('💥 Payment verification error:', error);
-    return next(
-      new ApiError('Failed to verify payment: ' + error.message, 500)
-    );
+    console.error('Payment verification error:', error);
+    return next(new ApiError('Failed to verify payment', 500));
   }
 });
 

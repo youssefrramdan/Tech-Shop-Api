@@ -2,7 +2,7 @@ import asyncHandler from 'express-async-handler';
 import ApiError from '../utils/apiError.js';
 import Cart from '../models/Cart.model.js';
 import Product from '../models/Product.model.js';
-import Coupon from '../models/Coupon.model.js';
+import { Coupon } from '../models/Coupon.model.js';
 
 const calcTotalCartPrice = cart => {
   let totalPrice = 0;
@@ -224,16 +224,16 @@ export const clearUserCart = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/v1/cart/applyCoupon
 // @access  Private
 export const applyCoupon = asyncHandler(async (req, res, next) => {
-  const { coupon: couponName } = req.body;
+  const { coupon: couponCode } = req.body;
 
-  if (!couponName) {
-    return next(new ApiError('Coupon name is required', 400));
+  if (!couponCode) {
+    return next(new ApiError('Coupon code is required', 400));
   }
 
-  // Get coupon based on coupon name
+  // Get coupon based on coupon code
   const coupon = await Coupon.findOne({
-    name: couponName,
-    expire: { $gt: Date.now() },
+    code: couponCode,
+    expires: { $gt: Date.now() },
   });
 
   if (!coupon) {

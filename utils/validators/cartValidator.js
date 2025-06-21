@@ -26,8 +26,8 @@ export const removeCartItemValidator = [
 export const applyCouponValidator = [
   check('coupon')
     .notEmpty()
-    .withMessage('Coupon name is required')
+    .withMessage('Coupon code is required')
     .isLength({ min: 2, max: 50 })
-    .withMessage('Coupon name must be between 2 and 50 characters'),
+    .withMessage('Coupon code must be between 2 and 50 characters'),
   validatorMiddleware,
 ];

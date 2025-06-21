@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start:dev": "nodemon server.js",
-    "start:prod": "NODE_ENV=production node server.js"
+    "start:prod": "NODE_ENV=production node server.js",
+    "webhook:dev": "nodemon webhook-server.js",
+    "webhook:prod": "NODE_ENV=production node webhook-server.js"
   },
   "keywords": [],
   "author": "",

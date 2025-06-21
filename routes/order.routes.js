@@ -3,7 +3,6 @@ import { protectedRoutes } from '../controllers/auth.controller.js';
 import {
   createCashOrder,
   createOnlinePayment,
-  handleStripeWebhook,
   verifyPaymentSuccess,
   getUserOrders,
   getAllOrders,
@@ -13,8 +12,7 @@ import {
 
 const orderRouter = Router();
 
-// Stripe webhook (before other routes)
-orderRouter.post('/webhook', handleStripeWebhook);
+// Note: Webhook is handled directly in app.js before other middleware
 
 // Verify payment success (fallback method)
 orderRouter.get(

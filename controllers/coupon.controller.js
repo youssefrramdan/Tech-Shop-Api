@@ -8,7 +8,7 @@ const addCoupon = catchError(async (req, res, next) => {
 
   let coupon = new Coupon(req.body);
   await coupon.save();
-  
+
   res.status(201).json({ message: "Coupon added successfully.", coupon });
 });
 
@@ -25,11 +25,11 @@ const getCoupon = catchError(async (req, res, next) => {
 });
 const updateCoupon = catchError(async (req, res, next) => {
   let coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,  
+    new: true,
   });
 
   if (!coupon) return next(new AppError('coupon not found', 404));
-  
+
   res.json({ message: "success", coupon });
 });
 const deleteCoupon = catchError(async (req, res, next) => {

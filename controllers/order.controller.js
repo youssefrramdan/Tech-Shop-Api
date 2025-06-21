@@ -1,20 +1,20 @@
-import { catchError } from '../middlewares/catchError.js';
-import { Cart } from '../models/Cart.model.js';
-import { Order } from '../models/Order.model.js';
-import { Product } from '../models/Product.model.js';
-import { AppError } from '../utils/appError.js';
+import Cart from '../models/Cart.model.js';
+import Order from '../models/Order.model.js';
+import Product from '../models/Product.model.js';
+import ApiError from '../utils/apiError.js';
 import Stripe from 'stripe';
+import asyncHandler from 'express-async-handler';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Create Cash Order
-const createCashOrder = catchError(async (req, res, next) => {
+const createCashOrder = asyncHandler(async (req, res, next) => {
   const { cartId } = req.params;
 
   let cart = await Cart.findById(cartId).populate('cartItems.product');
-  if (!cart) return next(new AppError('Cart not found', 404));
+  if (!cart) return next(new ApiError('Cart not found', 404));
 
   if (cart.user.toString() !== req.user._id.toString()) {
-    return next(new AppError('Not authorized to access this cart', 403));
+    return next(new ApiError('Not authorized to access this cart', 403));
   }
 
   let totalOrderPrice = cart.totalCartPriceAfterDiscount || cart.totalCartPrice;
@@ -43,7 +43,7 @@ const createCashOrder = catchError(async (req, res, next) => {
     await Cart.findByIdAndDelete(cart._id);
   } catch (error) {
     console.error('Error updating product stock:', error);
-    return next(new AppError('Failed to update product stock', 500));
+    return next(new ApiError('Failed to update product stock', 500));
   }
 
   res.status(201).json({
@@ -59,14 +59,14 @@ const createCashOrder = catchError(async (req, res, next) => {
 });
 
 // Create Online Payment Session
-const createOnlinePayment = catchError(async (req, res, next) => {
+const createOnlinePayment = asyncHandler(async (req, res, next) => {
   const { cartId } = req.params;
 
   let cart = await Cart.findById(cartId).populate('cartItems.product');
-  if (!cart) return next(new AppError('Cart not found', 404));
+  if (!cart) return next(new ApiError('Cart not found', 404));
 
   if (cart.user.toString() !== req.user._id.toString()) {
-    return next(new AppError('Not authorized to access this cart', 403));
+    return next(new ApiError('Not authorized to access this cart', 403));
   }
 
   let totalOrderPrice = cart.totalCartPriceAfterDiscount || cart.totalCartPrice;
@@ -103,7 +103,7 @@ const createOnlinePayment = catchError(async (req, res, next) => {
 });
 
 // Webhook to handle successful payment
-const handleStripeWebhook = catchError(async (req, res, next) => {
+const handleStripeWebhook = asyncHandler(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
@@ -153,7 +153,7 @@ const handleStripeWebhook = catchError(async (req, res, next) => {
 });
 
 // Get User Orders
-const getUserOrders = catchError(async (req, res, next) => {
+const getUserOrders = asyncHandler(async (req, res, next) => {
   const orders = await Order.find({ user: req.user._id })
     .populate(
       'OrderItems.product',
@@ -177,7 +177,7 @@ const getUserOrders = catchError(async (req, res, next) => {
 });
 
 // Get All Orders (Admin)
-const getAllOrders = catchError(async (req, res, next) => {
+const getAllOrders = asyncHandler(async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
@@ -212,7 +212,7 @@ const getAllOrders = catchError(async (req, res, next) => {
 });
 
 // Get Single Order
-const getOrderById = catchError(async (req, res, next) => {
+const getOrderById = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
 
   const order = await Order.findById(orderId)
@@ -223,7 +223,7 @@ const getOrderById = catchError(async (req, res, next) => {
     .populate('user', 'name email');
 
   if (!order) {
-    return next(new AppError('Order not found', 404));
+    return next(new ApiError('Order not found', 404));
   }
 
   // Check if user owns this order or is admin
@@ -231,7 +231,7 @@ const getOrderById = catchError(async (req, res, next) => {
     order.user._id.toString() !== req.user._id.toString() &&
     req.user.role !== 'admin'
   ) {
-    return next(new AppError('Not authorized to access this order', 403));
+    return next(new ApiError('Not authorized to access this order', 403));
   }
 
   res.status(200).json({
@@ -241,13 +241,13 @@ const getOrderById = catchError(async (req, res, next) => {
 });
 
 // Update Order Status (Admin)
-const updateOrderStatus = catchError(async (req, res, next) => {
+const updateOrderStatus = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
   const { isDelivered, isPaid } = req.body;
 
   const order = await Order.findById(orderId);
   if (!order) {
-    return next(new AppError('Order not found', 404));
+    return next(new ApiError('Order not found', 404));
   }
 
   if (isDelivered !== undefined) {

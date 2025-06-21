@@ -1,16 +1,16 @@
-import mongoose, { Types } from "mongoose";
+import mongoose, { Types } from 'mongoose';
 
 const schema = new mongoose.Schema(
   {
     user: {
       type: Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
     OrderItems: [
       {
         product: {
           type: Types.ObjectId,
-          ref: "Product",
+          ref: 'Product',
         },
         quantity: Number,
         price: Number,
@@ -24,8 +24,8 @@ const schema = new mongoose.Schema(
     },
     paymentType: {
       type: String,
-      enum: ["cash", "card"],
-      defult: "cash",
+      enum: ['cash', 'card'],
+      defult: 'cash',
     },
     isPaid: {
       type: Boolean,
@@ -44,4 +44,5 @@ const schema = new mongoose.Schema(
   }
 );
 
-export const Order = mongoose.model("Order", schema);
+const Order = mongoose.model('Order', schema);
+export default Order;

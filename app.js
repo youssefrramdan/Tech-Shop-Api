@@ -34,6 +34,9 @@ const corsOptions = {
     'http://localhost:3000',
     'https://localhost:3000',
     process.env.FRONTEND_URL || 'http://localhost:3000',
+    // Add Vercel domains
+    /^https:\/\/.*\.vercel\.app$/,
+    /^https:\/\/fresh-cart.*\.vercel\.app$/,
   ],
   credentials: true,
   optionsSuccessStatus: 200,

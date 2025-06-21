@@ -69,37 +69,60 @@ const createOnlinePayment = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Not authorized to access this cart', 403));
   }
 
+  // Validate cart items
+  if (!cart.cartItems || cart.cartItems.length === 0) {
+    return next(new ApiError('Cart is empty', 400));
+  }
+
   let totalOrderPrice = cart.totalCartPriceAfterDiscount || cart.totalCartPrice;
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    line_items: cart.cartItems.map(item => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.product.name || item.product.title,
-        },
-        unit_amount: Math.round(item.price * 100), // Convert to cents
-      },
-      quantity: item.quantity,
-    })),
-    mode: 'payment',
-    success_url: `${process.env.CLIENT_URL}/orders?success=true`,
-    cancel_url: `${process.env.CLIENT_URL}/cart?canceled=true`,
-    metadata: {
-      cartId: cartId,
-      userId: req.user._id.toString(),
-      shippingAddress: JSON.stringify(req.body.shippingAddress),
-    },
-  });
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: cart.cartItems.map(item => {
+        const productName =
+          item.product?.name || item.product?.title || 'Product';
+        const productPrice = item.price || item.product?.price || 0;
+        const productQuantity = item.quantity || 1;
 
-  res.status(200).json({
-    message: 'Payment session created successfully',
-    session: {
-      id: session.id,
-      url: session.url,
-    },
-  });
+        return {
+          price_data: {
+            currency: 'usd', // USD is more widely supported
+            product_data: {
+              name: productName,
+              description:
+                item.product?.description ||
+                `${productName} - High quality product`,
+              images: item.product?.imageCover ? [item.product.imageCover] : [],
+            },
+            unit_amount: Math.round(productPrice * 100), // Convert to cents
+          },
+          quantity: productQuantity,
+        };
+      }),
+      mode: 'payment',
+      success_url: `${process.env.CLIENT_URL}/allorders?success=true`,
+      cancel_url: `${process.env.CLIENT_URL}/cart?canceled=true`,
+      metadata: {
+        cartId: cartId,
+        userId: req.user._id.toString(),
+        shippingAddress: JSON.stringify(req.body.shippingAddress),
+      },
+    });
+
+    res.status(200).json({
+      message: 'Payment session created successfully',
+      session: {
+        id: session.id,
+        url: session.url,
+      },
+    });
+  } catch (error) {
+    console.error('Stripe session creation error:', error);
+    return next(
+      new ApiError('Failed to create payment session: ' + error.message, 500)
+    );
+  }
 });
 
 // Webhook to handle successful payment

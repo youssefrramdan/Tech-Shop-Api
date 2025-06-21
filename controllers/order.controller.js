@@ -47,7 +47,6 @@ const createCashOrder = asyncHandler(async (req, res, next) => {
     await Product.bulkWrite(options);
     await Cart.findByIdAndDelete(cart._id);
   } catch (error) {
-    console.error('Error updating product stock:', error);
     return next(new ApiError('Failed to update product stock', 500));
   }
 
@@ -65,11 +64,7 @@ const createCashOrder = asyncHandler(async (req, res, next) => {
 
 // Create Online Payment Session
 const createOnlinePayment = asyncHandler(async (req, res, next) => {
-  console.log('🚀 Creating online payment session...');
   const { cartId } = req.params;
-  console.log('🛒 Cart ID:', cartId);
-  console.log('👤 User ID:', req.user._id);
-  console.log('📦 Shipping Address:', req.body.shippingAddress);
 
   let cart = await Cart.findById(cartId).populate('cartItems.product');
   if (!cart) return next(new ApiError('Cart not found', 404));
@@ -84,7 +79,6 @@ const createOnlinePayment = asyncHandler(async (req, res, next) => {
   }
 
   let totalOrderPrice = cart.totalCartPriceAfterDiscount || cart.totalCartPrice;
-  console.log('💰 Total Order Price:', totalOrderPrice);
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -128,7 +122,6 @@ const createOnlinePayment = asyncHandler(async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error('Stripe session creation error:', error);
     return next(
       new ApiError('Failed to create payment session: ' + error.message, 500)
     );
@@ -137,17 +130,8 @@ const createOnlinePayment = asyncHandler(async (req, res, next) => {
 
 // Webhook to handle successful payment
 const handleStripeWebhook = asyncHandler(async (req, res, next) => {
-  console.log('🎯 Webhook received!');
-  console.log('Headers:', req.headers);
-
   const sig = req.headers['stripe-signature'];
   let event;
-
-  console.log(
-    '🔑 Webhook Secret:',
-    process.env.STRIPE_WEBHOOK_SECRET ? 'SET' : 'NOT SET'
-  );
-  console.log('📝 Signature:', sig ? 'EXISTS' : 'MISSING');
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -155,24 +139,16 @@ const handleStripeWebhook = asyncHandler(async (req, res, next) => {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-    console.log('✅ Webhook event constructed successfully');
-    console.log('📦 Event type:', event.type);
   } catch (err) {
-    console.error('❌ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   if (event.type === 'checkout.session.completed') {
-    console.log('💳 Processing checkout.session.completed event');
     const session = event.data.object;
     const { cartId, userId, shippingAddress } = session.metadata;
 
-    console.log('📋 Session metadata:', { cartId, userId, shippingAddress });
-
     const cart = await Cart.findById(cartId).populate('cartItems.product');
     if (cart) {
-      console.log('🛒 Cart found:', cart._id);
-
       const order = new Order({
         user: userId,
         OrderItems: cart.cartItems,
@@ -185,7 +161,6 @@ const handleStripeWebhook = asyncHandler(async (req, res, next) => {
       });
 
       await order.save();
-      console.log('✅ Order created successfully:', order._id);
 
       // Update product stock
       const options = cart.cartItems.map(item => ({
@@ -197,12 +172,7 @@ const handleStripeWebhook = asyncHandler(async (req, res, next) => {
 
       await Product.bulkWrite(options);
       await Cart.findByIdAndDelete(cartId);
-      console.log('🗑️ Cart deleted and stock updated');
-    } else {
-      console.log('❌ Cart not found:', cartId);
     }
-  } else {
-    console.log('ℹ️ Received event of type:', event.type);
   }
 
   res.status(200).json({ received: true });
@@ -270,7 +240,6 @@ const verifyPaymentSuccess = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error('Payment verification error:', error);
     return next(new ApiError('Failed to verify payment', 500));
   }
 });

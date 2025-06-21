@@ -18,11 +18,16 @@ const calcTotalCartPrice = cart => {
 // @route   POST /api/v1/cart
 // @access  Private
 export const addToCart = asyncHandler(async (req, res, next) => {
-  const { productId, quantity } = req.body;
+  const { productId, quantity = 1 } = req.body;
 
   const product = await Product.findById(productId);
   if (!product) {
     return next(new ApiError('Product not found', 404));
+  }
+
+  // Check if product is in stock
+  if (product.stock < quantity) {
+    return next(new ApiError('Insufficient stock', 400));
   }
 
   // Get Cart for logged user
@@ -32,22 +37,38 @@ export const addToCart = asyncHandler(async (req, res, next) => {
     // Create cart for logged user with product
     cart = await Cart.create({
       user: req.user._id,
-      cartItems: [{ product: productId, price: product.price, quantity }],
+      cartItems: [
+        {
+          product: productId,
+          price: product.priceAfterDiscount || product.price,
+          quantity: quantity,
+        },
+      ],
     });
   } else {
-    // product exist in cart, update quantity
+    // Check if product exists in cart
     const productIndex = cart.cartItems.findIndex(
       item => item.product.toString() === productId
     );
 
     if (productIndex > -1) {
-      cart.cartItems[productIndex].quantity += quantity || 1;
+      // Product exists, update quantity
+      const newQuantity = cart.cartItems[productIndex].quantity + quantity;
+
+      // Check total stock
+      if (product.stock < newQuantity) {
+        return next(new ApiError('Insufficient stock', 400));
+      }
+
+      cart.cartItems[productIndex].quantity = newQuantity;
+      cart.cartItems[productIndex].price =
+        product.priceAfterDiscount || product.price;
     } else {
-      // product not exist in cart,  push product to cartItems array
+      // Product doesn't exist in cart, add it
       cart.cartItems.push({
         product: productId,
-        price: product.price,
-        quantity,
+        price: product.priceAfterDiscount || product.price,
+        quantity: quantity,
       });
     }
   }
@@ -56,20 +77,29 @@ export const addToCart = asyncHandler(async (req, res, next) => {
   calcTotalCartPrice(cart);
   await cart.save();
 
+  // Populate the cart for response
+  const populatedCart = await Cart.findById(cart._id).populate({
+    path: 'cartItems.product',
+    select:
+      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+  });
+
   res.status(200).json({
     status: 'success',
     message: 'Product added to cart successfully',
-    data: cart,
+    numOfCartItems: populatedCart.cartItems.length,
+    data: populatedCart,
   });
 });
 
 // @desc    Get logged user cart
 // @route   GET /api/v1/cart
 // @access  Private
-export const getLoggedUser = asyncHandler(async (req, res, next) => {
+export const getLoggedUserCart = asyncHandler(async (req, res, next) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate({
     path: 'cartItems.product',
-    select: 'title imageCover brand category',
+    select:
+      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
   });
 
   if (!cart) {
@@ -91,30 +121,55 @@ export const getLoggedUser = asyncHandler(async (req, res, next) => {
 export const updateProductQuantity = asyncHandler(async (req, res, next) => {
   const { quantity } = req.body;
 
-  const cart = await Cart.findOne({ user: req.user._id });
+  if (!quantity || quantity < 1) {
+    return next(new ApiError('Quantity must be at least 1', 400));
+  }
+
+  const cart = await Cart.findOne({ user: req.user._id }).populate({
+    path: 'cartItems.product',
+    select: 'stock price priceAfterDiscount',
+  });
+
   if (!cart) {
-    return next(new ApiError(`there is no cart for user ${req.user._id}`, 404));
+    return next(new ApiError(`There is no cart for user ${req.user._id}`, 404));
   }
 
   const itemIndex = cart.cartItems.findIndex(
     item => item._id.toString() === req.params.id
   );
-  if (itemIndex > -1) {
-    cart.cartItems[itemIndex].quantity = quantity;
-  } else {
+
+  if (itemIndex === -1) {
     return next(
-      new ApiError(`there is no item for this id :${req.params.id}`, 404)
+      new ApiError(`There is no item for this id: ${req.params.id}`, 404)
     );
   }
 
-  calcTotalCartPrice(cart);
+  const product = cart.cartItems[itemIndex].product;
 
+  // Check stock availability
+  if (product.stock < quantity) {
+    return next(new ApiError('Insufficient stock', 400));
+  }
+
+  // Update quantity and price (in case price changed)
+  cart.cartItems[itemIndex].quantity = quantity;
+  cart.cartItems[itemIndex].price = product.priceAfterDiscount || product.price;
+
+  // Calculate total cart price
+  calcTotalCartPrice(cart);
   await cart.save();
+
+  // Re-populate for response
+  const updatedCart = await Cart.findById(cart._id).populate({
+    path: 'cartItems.product',
+    select:
+      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+  });
 
   res.status(200).json({
     status: 'success',
-    numOfCartItems: cart.cartItems.length,
-    data: cart,
+    numOfCartItems: updatedCart.cartItems.length,
+    data: updatedCart,
   });
 });
 
@@ -128,12 +183,17 @@ export const removeItemFromCart = asyncHandler(async (req, res, next) => {
       $pull: { cartItems: { _id: req.params.id } },
     },
     { new: true }
-  );
+  ).populate({
+    path: 'cartItems.product',
+    select:
+      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+  });
 
   if (!cart) {
-    return next(new ApiError(`there is no cart for user ${req.user._id}`, 404));
+    return next(new ApiError(`There is no cart for user ${req.user._id}`, 404));
   }
 
+  // Calculate total cart price
   calcTotalCartPrice(cart);
   await cart.save();
 
@@ -148,30 +208,52 @@ export const removeItemFromCart = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/v1/cart
 // @access  Private
 export const clearUserCart = asyncHandler(async (req, res, next) => {
-  await Cart.findOneAndDelete({ user: req.user._id });
-  res.status(204).send();
+  const result = await Cart.findOneAndDelete({ user: req.user._id });
+
+  if (!result) {
+    return next(new ApiError(`There is no cart for user ${req.user._id}`, 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Cart cleared successfully',
+  });
 });
 
 // @desc    Apply coupon on logged user cart
 // @route   PUT /api/v1/cart/applyCoupon
 // @access  Private
 export const applyCoupon = asyncHandler(async (req, res, next) => {
-  // 1) Get coupon based on coupon name
+  const { coupon: couponName } = req.body;
+
+  if (!couponName) {
+    return next(new ApiError('Coupon name is required', 400));
+  }
+
+  // Get coupon based on coupon name
   const coupon = await Coupon.findOne({
-    name: req.body.coupon,
+    name: couponName,
     expire: { $gt: Date.now() },
   });
 
   if (!coupon) {
-    return next(new ApiError(`Coupon is invalid or expired`));
+    return next(new ApiError('Coupon is invalid or expired', 400));
   }
 
-  // 2) Get logged user cart to get total cart price
-  const cart = await Cart.findOne({ user: req.user._id });
+  // Get logged user cart
+  const cart = await Cart.findOne({ user: req.user._id }).populate({
+    path: 'cartItems.product',
+    select:
+      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+  });
+
+  if (!cart) {
+    return next(new ApiError(`There is no cart for user ${req.user._id}`, 404));
+  }
 
   const totalPrice = cart.totalCartPrice;
 
-  // 3) Calculate price after priceAfterDiscount
+  // Calculate price after discount
   const totalPriceAfterDiscount = (
     totalPrice -
     (totalPrice * coupon.discount) / 100
@@ -182,7 +264,49 @@ export const applyCoupon = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
+    message: 'Coupon applied successfully',
     numOfCartItems: cart.cartItems.length,
     data: cart,
+  });
+});
+
+// @desc    Remove coupon from cart
+// @route   DELETE /api/v1/cart/applyCoupon
+// @access  Private
+export const removeCoupon = asyncHandler(async (req, res, next) => {
+  const cart = await Cart.findOne({ user: req.user._id }).populate({
+    path: 'cartItems.product',
+    select:
+      'title imageCover brand category price priceAfterDiscount stock ratingsAverage',
+  });
+
+  if (!cart) {
+    return next(new ApiError(`There is no cart for user ${req.user._id}`, 404));
+  }
+
+  cart.totalPriceAfterDiscount = undefined;
+  await cart.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Coupon removed successfully',
+    numOfCartItems: cart.cartItems.length,
+    data: cart,
+  });
+});
+
+// @desc    Get cart items count for logged user
+// @route   GET /api/v1/cart/count
+// @access  Private
+export const getCartCount = asyncHandler(async (req, res, next) => {
+  const cart = await Cart.findOne({ user: req.user._id });
+
+  const count = cart ? cart.cartItems.length : 0;
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      count: count,
+    },
   });
 });

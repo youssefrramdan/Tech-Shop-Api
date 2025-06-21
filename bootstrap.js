@@ -6,6 +6,7 @@ import subCategoryRouter from './routes/subcategory.routes.js';
 import userRouter from './routes/user.routes.js';
 import wishlistRouter from './routes/wishlist.routes.js';
 import { cartRouter } from './routes/cart.routes.js';
+import { orderRouter } from './routes/order.routes.js';
 
 const bootstrap = app => {
   app.use('/api/v1/subcategories', subCategoryRouter);
@@ -16,8 +17,8 @@ const bootstrap = app => {
   app.use('/api/v1/brand', brandRouter);
   app.use('/api/v1/wishlist', wishlistRouter);
   app.use('/api/v1/cart', cartRouter);
+  app.use('/api/v1/orders', orderRouter);
   //   app.use("/api/coupons" ,couponRouter)
-  //   app.use("/api/orders" ,orderRouter)
 };
 
 export default bootstrap;

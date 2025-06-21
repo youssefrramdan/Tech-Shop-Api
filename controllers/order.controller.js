@@ -6,7 +6,6 @@ import { AppError } from '../utils/appError.js';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 // Create Cash Order
 const createCashOrder = catchError(async (req, res, next) => {
   const { cartId } = req.params;

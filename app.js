@@ -54,6 +54,9 @@ app.options('*', cors(corsOptions));
 
 app.use(compression());
 
+// Stripe webhook endpoint - must be before express.json()
+app.use('/api/v1/orders/webhook', express.raw({ type: 'application/json' }));
+
 // middlewares
 app.use(express.json());
 app.use(cookieParser());

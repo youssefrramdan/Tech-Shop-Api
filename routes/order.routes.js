@@ -4,6 +4,7 @@ import {
   createCashOrder,
   createOnlinePayment,
   handleStripeWebhook,
+  verifyPaymentSuccess,
   getUserOrders,
   getAllOrders,
   getOrderById,
@@ -14,6 +15,13 @@ const orderRouter = Router();
 
 // Stripe webhook (before other routes)
 orderRouter.post('/webhook', handleStripeWebhook);
+
+// Verify payment success (fallback method)
+orderRouter.get(
+  '/verify-payment/:sessionId',
+  protectedRoutes,
+  verifyPaymentSuccess
+);
 
 // Create cash order
 orderRouter.post('/cash/:cartId', protectedRoutes, createCashOrder);

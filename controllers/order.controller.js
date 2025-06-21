@@ -106,8 +106,8 @@ const createOnlinePayment = asyncHandler(async (req, res, next) => {
         };
       }),
       mode: 'payment',
-      success_url: `${process.env.CLIENT_URL}/allorders?success=true`,
-      cancel_url: `${process.env.CLIENT_URL}/cart?canceled=true`,
+      success_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/allorders?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/cart?canceled=true`,
       metadata: {
         cartId: cartId,
         userId: req.user._id.toString(),
@@ -178,6 +178,73 @@ const handleStripeWebhook = asyncHandler(async (req, res, next) => {
   }
 
   res.status(200).json({ received: true });
+});
+
+// Verify Payment Success (fallback method)
+const verifyPaymentSuccess = asyncHandler(async (req, res, next) => {
+  const { sessionId } = req.params;
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status === 'paid') {
+      const { cartId, userId, shippingAddress } = session.metadata;
+
+      // Check if order already exists
+      const existingOrder = await Order.findOne({
+        user: userId,
+        'metadata.sessionId': sessionId,
+      });
+
+      if (!existingOrder) {
+        const cart = await Cart.findById(cartId).populate('cartItems.product');
+        if (cart) {
+          const order = new Order({
+            user: userId,
+            OrderItems: cart.cartItems,
+            shippingAddress: JSON.parse(shippingAddress),
+            totalOrderPrice: session.amount_total / 100,
+            paymentType: 'card',
+            isPaid: true,
+            PaidAt: new Date(),
+            metadata: { sessionId },
+          });
+
+          await order.save();
+
+          // Update product stock
+          const options = cart.cartItems.map(item => ({
+            updateOne: {
+              filter: { _id: item.product._id },
+              update: { $inc: { sold: item.quantity, stock: -item.quantity } },
+            },
+          }));
+
+          await Product.bulkWrite(options);
+          await Cart.findByIdAndDelete(cartId);
+
+          return res.status(200).json({
+            message: 'Payment verified and order created successfully',
+            success: true,
+            order: order._id,
+          });
+        }
+      }
+
+      return res.status(200).json({
+        message: 'Payment already processed',
+        success: true,
+      });
+    } else {
+      return res.status(400).json({
+        message: 'Payment not completed',
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    return next(new ApiError('Failed to verify payment', 500));
+  }
 });
 
 // Get User Orders
@@ -304,6 +371,7 @@ export {
   createCashOrder,
   createOnlinePayment,
   handleStripeWebhook,
+  verifyPaymentSuccess,
   getUserOrders,
   getAllOrders,
   getOrderById,

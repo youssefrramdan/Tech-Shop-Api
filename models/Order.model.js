@@ -37,6 +37,10 @@ const schema = new mongoose.Schema(
       default: false,
     },
     deliveredAt: Date,
+    metadata: {
+      sessionId: String,
+      paymentIntentId: String,
+    },
   },
   {
     timestamps: true,

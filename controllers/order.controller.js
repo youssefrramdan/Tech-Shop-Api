@@ -19,13 +19,18 @@ const createCashOrder = asyncHandler(async (req, res, next) => {
 
   let totalOrderPrice = cart.totalCartPriceAfterDiscount || cart.totalCartPrice;
 
+  // Check if this is a completed Stripe payment
+  const { completedPayment, paymentType, isPaid } = req.body;
+  const isStripePayment = completedPayment && paymentType === 'card';
+
   let order = new Order({
     user: req.user._id,
     OrderItems: cart.cartItems,
     shippingAddress: req.body.shippingAddress,
     totalOrderPrice,
-    paymentType: 'cash',
-    isPaid: false,
+    paymentType: isStripePayment ? 'card' : 'cash',
+    isPaid: isStripePayment ? true : false,
+    PaidAt: isStripePayment ? new Date() : undefined,
   });
 
   await order.save();

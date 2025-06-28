@@ -132,19 +132,6 @@ const createProduct = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Product title is required', 400));
   }
 
-  // Generate unique slug from title
-  const baseSlug = slugify(req.body.title.trim(), { lower: true });
-  let uniqueSlug = baseSlug;
-  let counter = 1;
-
-  // Check if slug already exists and make it unique
-  while (await ProductModel.findOne({ slug: uniqueSlug })) {
-    uniqueSlug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-
-  req.body.slug = uniqueSlug;
-
   const images = [];
   if (req.files) {
     if (req.files.images) {
@@ -179,10 +166,7 @@ const updateProduct = asyncHandler(async (req, res, next) => {
     return next(new ApiError(`No product found with ID: ${id}`, 404));
   }
 
-  // Update slug if title is provided
-  if (req.body.title) {
-    req.body.slug = slugify(req.body.title);
-  }
+  // No slug needed anymore
 
   // Handle image updates only if new files are uploaded
   if (req.files) {

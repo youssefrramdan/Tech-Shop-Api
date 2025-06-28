@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import slugify from 'slugify';
 
 const productSchema = new mongoose.Schema(
   {
@@ -9,12 +8,6 @@ const productSchema = new mongoose.Schema(
       trim: true,
       minlength: [3, 'Product title must be at least 3 characters long'],
       maxlength: [100, 'Product title cannot exceed 100 characters'],
-    },
-    slug: {
-      type: String,
-      lowercase: true,
-      // unique: true,  // إزالة مؤقتاً حتى نصلح البيانات القديمة
-      // sparse: true,
     },
     description: {
       type: String,
@@ -81,14 +74,6 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// Create slug from title before saving
-productSchema.pre('save', function (next) {
-  // Only create slug if it doesn't exist and title is available
-  if (this.title && this.title.trim() && !this.slug) {
-    this.slug = slugify(this.title.trim(), { lower: true });
-  }
-  next();
-});
 
 // Add text index for search functionality
 productSchema.index({ title: 'text', description: 'text' });

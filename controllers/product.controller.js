@@ -127,10 +127,23 @@ const getSpecificProduct = asyncHandler(async (req, res, next) => {
 // @route    POST /api/v1/products
 // @access   privite
 const createProduct = asyncHandler(async (req, res, next) => {
-  // Generate slug from title
-  if (req.body.title) {
-    req.body.slug = slugify(req.body.title);
+  // Validate required fields
+  if (!req.body.title || !req.body.title.trim()) {
+    return next(new ApiError('Product title is required', 400));
   }
+
+  // Generate unique slug from title
+  const baseSlug = slugify(req.body.title.trim(), { lower: true });
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  // Check if slug already exists and make it unique
+  while (await ProductModel.findOne({ slug: uniqueSlug })) {
+    uniqueSlug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  req.body.slug = uniqueSlug;
 
   const images = [];
   if (req.files) {

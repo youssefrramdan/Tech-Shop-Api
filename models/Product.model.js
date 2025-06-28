@@ -13,6 +13,8 @@ const productSchema = new mongoose.Schema(
     slug: {
       type: String,
       lowercase: true,
+      // unique: true,  // إزالة مؤقتاً حتى نصلح البيانات القديمة
+      // sparse: true,
     },
     description: {
       type: String,
@@ -79,12 +81,12 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-
-
 // Create slug from title before saving
 productSchema.pre('save', function (next) {
-  this.slug = slugify(this.title);
-//   this.discountedPrice = this.price - (this.price * (this.discount || 0)) / 100;
+  // Only create slug if it doesn't exist and title is available
+  if (this.title && this.title.trim() && !this.slug) {
+    this.slug = slugify(this.title.trim(), { lower: true });
+  }
   next();
 });
 

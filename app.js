@@ -41,6 +41,7 @@ const corsOptions = {
           /^https:\/\/.*\.vercel\.app$/,
           /^https:\/\/fresh-cart.*\.vercel\.app$/,
         ],
+        
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

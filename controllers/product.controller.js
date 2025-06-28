@@ -87,6 +87,9 @@ const getAllProduct = asyncHandler(async (req, res) => {
   mongooseQuery = mongooseQuery.populate({
     path: 'category',
     select: 'name',
+  }).populate({
+    path: 'brand',
+    select: 'name',
   });
 
   // Execute query

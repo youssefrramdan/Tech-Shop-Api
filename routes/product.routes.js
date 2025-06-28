@@ -12,7 +12,7 @@ import { protectedRoutes } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
 
 const productRouter = express.Router();
-const upload = createUploader();
+const upload = createUploader('products');
 
 // Featured products route (should come before /:id route)
 productRouter.get('/featured', getFeaturedProducts);
@@ -36,7 +36,7 @@ productRouter
   .route('/:id')
   .get(getSpecificProduct)
   .delete(protectedRoutes, deleteProduct)
-  .put(
+  .patch(
     protectedRoutes,
     upload.fields([
       { name: 'images', maxCount: 10 },

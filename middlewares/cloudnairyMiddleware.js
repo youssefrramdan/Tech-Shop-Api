@@ -18,22 +18,29 @@ const createUploader = folder => {
   const storage = new CloudinaryStorage({
     cloudinary,
     params: {
-      folder: folder,
-      //   resource_type: 'raw',
-      public_id: (req, file) =>
-        `${file.fieldname}-${Date.now()}-${file.originalname}`,
-      format: async (req, file) => {
-        const allowedFormats = ['jpeg','jpg','png','pdf','doc','docx','xls','xlsx','ppt','pptx'];
-        const ext = file.originalname.split('.').pop();
-        if (allowedFormats.includes(ext)) {
-          return ext;
-        }
-        throw new Error('Invalid file format.');
+      folder: folder || 'products',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+      transformation: [{ width: 500, height: 500, crop: 'limit' }],
+      public_id: (req, file) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        return `${file.fieldname}-${uniqueSuffix}`;
       },
     },
   });
 
-  return multer({ storage });
+  return multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Not an image! Please upload only images.'), false);
+      }
+    },
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max file size
+    },
+  });
 };
 
 export default createUploader;

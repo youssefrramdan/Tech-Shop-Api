@@ -27,6 +27,11 @@ const schema = new mongoose.Schema(
       enum: ['cash', 'card'],
       defult: 'cash',
     },
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+      default: 'pending',
+    },
     isPaid: {
       type: Boolean,
       default: false,

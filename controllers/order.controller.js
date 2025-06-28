@@ -299,7 +299,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
     totalOrders,
     currentPage: page,
     totalPages: Math.ceil(totalOrders / limit),
-    orders,
+    data: orders,
   });
 });
 
@@ -335,17 +335,33 @@ const getOrderById = asyncHandler(async (req, res, next) => {
 // Update Order Status (Admin)
 const updateOrderStatus = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
-  const { isDelivered, isPaid } = req.body;
+  const { status, isDelivered, isPaid } = req.body;
 
   const order = await Order.findById(orderId);
   if (!order) {
     return next(new ApiError('Order not found', 404));
   }
 
+  // Update status if provided
+  if (status !== undefined) {
+    order.status = status;
+
+    // Auto-update related fields based on status
+    if (status === 'delivered') {
+      order.isDelivered = true;
+      order.deliveredAt = new Date();
+    } else if (status === 'cancelled') {
+      order.isDelivered = false;
+      order.deliveredAt = undefined;
+    }
+  }
+
+  // Legacy support for isDelivered and isPaid
   if (isDelivered !== undefined) {
     order.isDelivered = isDelivered;
     if (isDelivered) {
       order.deliveredAt = new Date();
+      order.status = 'delivered';
     }
   }
 
@@ -360,7 +376,7 @@ const updateOrderStatus = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     message: 'Order updated successfully',
-    order,
+    data: order,
   });
 });
 

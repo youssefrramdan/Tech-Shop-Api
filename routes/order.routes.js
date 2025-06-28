@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { protectedRoutes } from '../controllers/auth.controller.js';
+import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
+import adminOnly from '../middlewares/admin.middleware.js';
 import {
   createCashOrder,
   createOnlinePayment,
@@ -27,16 +28,24 @@ orderRouter.post('/cash/:cartId', protectedRoutes, createCashOrder);
 // Create online payment session
 orderRouter.post('/online/:cartId', protectedRoutes, createOnlinePayment);
 
+// Get all orders (admin) - must be before /:orderId
+orderRouter.get('/', protectedRoutes, adminOnly, getAllOrders);
+
 // Get user orders
 orderRouter.get('/user', protectedRoutes, getUserOrders);
 
-// Get single order
+// Update order status (admin) - must be before /:orderId
+orderRouter.patch(
+  '/:orderId/status',
+  protectedRoutes,
+  adminOnly,
+  updateOrderStatus
+);
+
+// Update order (admin) - for general updates
+orderRouter.patch('/:orderId', protectedRoutes, adminOnly, updateOrderStatus);
+
+// Get single order - must be last
 orderRouter.get('/:orderId', protectedRoutes, getOrderById);
-
-// Get all orders (admin)
-orderRouter.get('/', protectedRoutes, getAllOrders);
-
-// Update order status (admin)
-orderRouter.patch('/:orderId/status', protectedRoutes, updateOrderStatus);
 
 export { orderRouter };

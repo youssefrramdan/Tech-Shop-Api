@@ -151,23 +151,37 @@ const createProduct = asyncHandler(async (req, res, next) => {
 const updateProduct = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
+  // Get the existing product first
+  const existingProduct = await ProductModel.findById(id);
+  if (!existingProduct) {
+    return next(new ApiError(`No product found with ID: ${id}`, 404));
+  }
+
+  // Update slug if name/title is provided
   if (req.body.name || req.body.title) {
     req.body.slug = slugify(req.body.name || req.body.title);
   }
 
-  const images = [];
+  // Handle image updates only if new files are uploaded
   if (req.files) {
+    const images = [];
+
+    // Handle multiple images
     if (req.files.images) {
       req.files.images.forEach(file => {
         images.push(file.path);
       });
+      // Only update images if new ones are uploaded
       req.body.images = images;
     }
+
+    // Handle cover image
     if (req.files.imageCover) {
       req.body.imageCover = req.files.imageCover[0].path;
     }
   }
 
+  // Update the product
   const product = await ProductModel.findByIdAndUpdate({ _id: id }, req.body, {
     new: true,
     runValidators: true,
@@ -175,10 +189,6 @@ const updateProduct = asyncHandler(async (req, res, next) => {
     path: 'category',
     select: 'name',
   });
-
-  if (!product) {
-    return next(new ApiError(`No product found with ID: ${id}`, 404));
-  }
 
   res.status(200).json({
     message: 'success',

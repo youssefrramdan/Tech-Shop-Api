@@ -13,6 +13,7 @@ const addCoupon = catchError(async (req, res, next) => {
 });
 
 
+
 const allCoupons = catchError(async (req, res, next) => {
   let coupons = await Coupon.find();
   res.json({ message: "success", coupons });

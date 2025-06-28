@@ -28,7 +28,6 @@ const getAllProduct = asyncHandler(async (req, res) => {
     const searchTerm = req.query.keyword || req.query.search;
     const searchQuery = {
       $or: [
-        { name: { $regex: searchTerm, $options: 'i' } },
         { title: { $regex: searchTerm, $options: 'i' } },
         { description: { $regex: searchTerm, $options: 'i' } },
       ],
@@ -84,13 +83,15 @@ const getAllProduct = asyncHandler(async (req, res) => {
   }
 
   // 11) Populate category information
-  mongooseQuery = mongooseQuery.populate({
-    path: 'category',
-    select: 'name',
-  }).populate({
-    path: 'brand',
-    select: 'name',
-  });
+  mongooseQuery = mongooseQuery
+    .populate({
+      path: 'category',
+      select: 'name',
+    })
+    .populate({
+      path: 'brand',
+      select: 'name',
+    });
 
   // Execute query
   const products = await mongooseQuery;
@@ -126,7 +127,11 @@ const getSpecificProduct = asyncHandler(async (req, res, next) => {
 // @route    POST /api/v1/products
 // @access   privite
 const createProduct = asyncHandler(async (req, res, next) => {
-  req.body.slug = slugify(req.body.name || req.body.title);
+  // Generate slug from title
+  if (req.body.title) {
+    req.body.slug = slugify(req.body.title);
+  }
+
   const images = [];
   if (req.files) {
     if (req.files.images) {
@@ -141,6 +146,7 @@ const createProduct = asyncHandler(async (req, res, next) => {
       req.body.images = images;
     }
   }
+
   const product = await ProductModel.create(req.body);
   res.status(201).json({
     message: 'success',
@@ -160,9 +166,9 @@ const updateProduct = asyncHandler(async (req, res, next) => {
     return next(new ApiError(`No product found with ID: ${id}`, 404));
   }
 
-  // Update slug if name/title is provided
-  if (req.body.name || req.body.title) {
-    req.body.slug = slugify(req.body.name || req.body.title);
+  // Update slug if title is provided
+  if (req.body.title) {
+    req.body.slug = slugify(req.body.title);
   }
 
   // Handle image updates only if new files are uploaded

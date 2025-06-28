@@ -14,6 +14,7 @@ const createBrand = asyncHandler(async (req, res, next) => {
     req.body.logo = req.file.path;
   }
 
+  
   // Create slug from name
   req.body.slug = slugify(req.body.name);
 

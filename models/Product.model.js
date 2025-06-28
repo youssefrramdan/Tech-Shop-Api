@@ -79,18 +79,10 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// Create slug from title before saving and calculate priceAfterDiscount
+// Create slug from title before saving
 productSchema.pre('save', function (next) {
   this.slug = slugify(this.title);
-
-  // Calculate priceAfterDiscount from discount percentage
-  if (this.discount && this.discount > 0 && this.price) {
-    const discountAmount = (this.price * this.discount) / 100;
-    this.priceAfterDiscount = this.price - discountAmount;
-  } else if (this.discount === 0 || !this.discount) {
-    this.priceAfterDiscount = undefined; // Remove priceAfterDiscount if no discount
-  }
-
+//   this.discountedPrice = this.price - (this.price * (this.discount || 0)) / 100;
   next();
 });
 

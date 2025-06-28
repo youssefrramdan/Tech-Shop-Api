@@ -364,6 +364,69 @@ const updateOrderStatus = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Get Order Statistics
+ * @route   GET /api/v1/admin/stats/orders
+ * @access  Admin
+ */
+const getOrderStats = asyncHandler(async (req, res) => {
+  const stats = await Order.aggregate([
+    {
+      $facet: {
+        totalOrders: [{ $count: 'count' }],
+        totalRevenue: [
+          {
+            $group: {
+              _id: null,
+              total: { $sum: '$totalOrderPrice' },
+            },
+          },
+        ],
+        ordersByStatus: [
+          {
+            $group: {
+              _id: '$status',
+              count: { $sum: 1 },
+            },
+          },
+        ],
+        recentOrders: [
+          { $sort: { createdAt: -1 } },
+          { $limit: 5 },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'user',
+              foreignField: '_id',
+              as: 'user',
+            },
+          },
+          { $unwind: '$user' },
+          {
+            $project: {
+              _id: 1,
+              totalOrderPrice: 1,
+              status: 1,
+              'user.name': 1,
+              createdAt: 1,
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      totalOrders: stats[0].totalOrders[0]?.count || 0,
+      totalRevenue: stats[0].totalRevenue[0]?.total || 0,
+      ordersByStatus: stats[0].ordersByStatus,
+      recentOrders: stats[0].recentOrders,
+    },
+  });
+});
+
 export {
   createCashOrder,
   createOnlinePayment,
@@ -373,4 +436,5 @@ export {
   getAllOrders,
   getOrderById,
   updateOrderStatus,
+  getOrderStats,
 };

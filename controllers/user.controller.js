@@ -203,6 +203,40 @@ const changeUserPassword = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Update user role
+ * @route   PATCH /api/v1/users/:id/role
+ * @access  Private/Admin
+ */
+const updateUserRole = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { role } = req.body;
+
+  if (!role || !['admin', 'user'].includes(role)) {
+    return next(
+      new ApiError(
+        'Invalid role specified. Role must be either "admin" or "user"',
+        400
+      )
+    );
+  }
+
+  const user = await UserModel.findByIdAndUpdate(
+    id,
+    { role },
+    { new: true, runValidators: true }
+  );
+
+  if (!user) {
+    return next(new ApiError(`No user found with ID: ${id}`, 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: user,
+  });
+});
+
 export {
   createUser,
   getAllUsers,
@@ -214,4 +248,5 @@ export {
   uploadUserImage,
   changeMyPassword,
   changeUserPassword,
+  updateUserRole,
 };

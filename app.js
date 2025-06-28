@@ -9,6 +9,9 @@ import globalError from './middlewares/errorMiddleware.js';
 import ApiError from './utils/apiError.js';
 import bootstrap from './bootstrap.js';
 import logger from './config/loger.config.js';
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 dotenv.config({ path: './config/config.env' });
 
@@ -69,6 +72,11 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(cookieParser());
 bootstrap(app);
+
+// Mount Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // Handle undefined routes
 app.all('*', (req, res, next) => {

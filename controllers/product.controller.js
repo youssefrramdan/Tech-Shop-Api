@@ -243,6 +243,67 @@ const getFeaturedProducts = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Get Product Statistics
+ * @route   GET /api/v1/admin/stats/products
+ * @access  Admin
+ */
+const getProductStats = asyncHandler(async (req, res) => {
+  const stats = await ProductModel.aggregate([
+    {
+      $facet: {
+        totalProducts: [{ $count: 'count' }],
+        productsByCategory: [
+          {
+            $group: {
+              _id: '$category',
+              count: { $sum: 1 },
+            },
+          },
+          {
+            $lookup: {
+              from: 'categories',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'category',
+            },
+          },
+          { $unwind: '$category' },
+          {
+            $project: {
+              name: '$category.name',
+              count: 1,
+            },
+          },
+        ],
+        topProducts: [
+          { $sort: { sold: -1 } },
+          { $limit: 5 },
+          {
+            $project: {
+              title: 1,
+              price: 1,
+              sold: 1,
+              quantity: 1,
+            },
+          },
+        ],
+        lowStock: [{ $match: { quantity: { $lt: 10 } } }, { $count: 'count' }],
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      totalProducts: stats[0].totalProducts[0]?.count || 0,
+      productsByCategory: stats[0].productsByCategory,
+      topProducts: stats[0].topProducts,
+      lowStock: stats[0].lowStock[0]?.count || 0,
+    },
+  });
+});
+
 export {
   getAllProduct,
   getSpecificProduct,
@@ -251,4 +312,5 @@ export {
   deleteProduct,
   getProductsByCategory,
   getFeaturedProducts,
+  getProductStats,
 };

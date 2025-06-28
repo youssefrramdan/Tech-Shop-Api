@@ -35,7 +35,7 @@ const createCategory = asyncHandler(async (req, res, next) => {
  */
 const getCategories = asyncHandler(async (req, res) => {
   const categories = await Category.find().populate('productsCount');
-
+ 
   res.status(200).json({
     status: 'success',
     results: categories.length,

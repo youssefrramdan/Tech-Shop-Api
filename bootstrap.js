@@ -8,18 +8,24 @@ import wishlistRouter from './routes/wishlist.routes.js';
 import { cartRouter } from './routes/cart.routes.js';
 import { orderRouter } from './routes/order.routes.js';
 import adminRouter from './routes/admin.routes.js';
+import express from 'express';
 
 const bootstrap = app => {
-  app.use('/api/v1/subcategories', subCategoryRouter);
-  app.use('/api/v1/categories', categoryRouter);
-  app.use('/api/v1/products', productRouter);
-  app.use('/api/v1/users', userRouter);
-  app.use('/api/v1/auth', authRouter);
-  app.use('/api/v1/brand', brandRouter);
-  app.use('/api/v1/wishlist', wishlistRouter);
-  app.use('/api/v1/cart', cartRouter);
-  app.use('/api/v1/orders', orderRouter);
-  app.use('/api/v1/admin', adminRouter);
+  // API routes
+  const apiRouter = express.Router();
+  app.use('/api/v1', apiRouter);
+
+  // Mount all routes under /api/v1
+  apiRouter.use('/products', productRouter);
+  apiRouter.use('/categories', categoryRouter);
+  apiRouter.use('/subcategories', subCategoryRouter);
+  apiRouter.use('/users', userRouter);
+  apiRouter.use('/auth', authRouter);
+  apiRouter.use('/brands', brandRouter);
+  apiRouter.use('/wishlist', wishlistRouter);
+  apiRouter.use('/cart', cartRouter);
+  apiRouter.use('/orders', orderRouter);
+  apiRouter.use('/admin', adminRouter);
   //   app.use("/api/coupons" ,couponRouter)
 };
 

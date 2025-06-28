@@ -60,11 +60,16 @@ app.options('*', cors(corsOptions));
 
 app.use(compression());
 
-// Note: Webhook is handled by separate webhook-server.js for proper raw body handling
-
-// middlewares
+// Parse JSON payloads
 app.use(express.json());
+
+// Parse URL-encoded bodies
+app.use(express.urlencoded({ extended: true }));
+
+// Cookie parser
 app.use(cookieParser());
+
+// Logging in development
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
   logger.info(`mode : ${process.env.NODE_ENV}`);

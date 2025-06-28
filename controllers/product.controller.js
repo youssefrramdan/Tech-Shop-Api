@@ -282,9 +282,36 @@ const getProductStats = asyncHandler(async (req, res) => {
           {
             $project: {
               title: 1,
+              name: 1,
               price: 1,
+              priceAfterDiscount: 1,
               sold: 1,
               quantity: 1,
+              imageCover: 1,
+              description: 1,
+              category: 1,
+            },
+          },
+          {
+            $lookup: {
+              from: 'categories',
+              localField: 'category',
+              foreignField: '_id',
+              as: 'categoryDetails',
+            },
+          },
+          { $unwind: '$categoryDetails' },
+          {
+            $project: {
+              title: 1,
+              name: 1,
+              price: 1,
+              priceAfterDiscount: 1,
+              sold: 1,
+              quantity: 1,
+              imageCover: 1,
+              description: 1,
+              'category.name': '$categoryDetails.name',
             },
           },
         ],

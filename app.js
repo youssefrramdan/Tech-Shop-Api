@@ -20,13 +20,17 @@ const app = express();
 // Trust proxy - Required for Heroku deployment
 app.set('trust proxy', 1);
 
-// Rate limiting
+// Rate limiting - More generous limits for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 1000, // Increased from 100 to 1000 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting for development
+  skip: req => {
+    return process.env.NODE_ENV === 'development';
+  },
 });
 
 // Apply rate limiting to all routes
@@ -34,14 +38,14 @@ app.use('/api/', limiter);
 
 const corsOptions = {
   origin: [
-          'http://localhost:3000',
-          'https://localhost:3000',
-          process.env.FRONTEND_URL || 'http://localhost:3000',
-          // Add Vercel domains
-          /^https:\/\/.*\.vercel\.app$/,
-          /^https:\/\/fresh-cart.*\.vercel\.app$/,
-        ],
-        
+    'http://localhost:3000',
+    'https://localhost:3000',
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    // Add Vercel domains
+    /^https:\/\/.*\.vercel\.app$/,
+    /^https:\/\/fresh-cart.*\.vercel\.app$/,
+  ],
+
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

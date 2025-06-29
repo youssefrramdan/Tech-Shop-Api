@@ -10,6 +10,7 @@ import {
   uploadUserImage,
   changeMyPassword,
   changeUserPassword,
+  updateUserRole,
 } from '../controllers/user.controller.js';
 import { protectedRoutes, allowTo } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -33,6 +34,10 @@ userRouter.route('/changePassword').patch(protectedRoutes, changeMyPassword);
 userRouter
   .route('/changePassword/:id')
   .patch(protectedRoutes, changeUserPassword);
+
+userRouter
+  .route('/:id/role')
+  .patch(protectedRoutes, allowTo('admin'), updateUserRole);
 
 userRouter.route('/:id').get(getUser).put(updateUser).delete(deleteUser);
 

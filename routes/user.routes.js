@@ -18,7 +18,10 @@ import createUploader from '../middlewares/cloudnairyMiddleware.js';
 const upload = createUploader();
 const userRouter = express.Router();
 
-userRouter.route('/').post(createUser).get(getAllUsers);
+userRouter
+  .route('/')
+  .post(protectedRoutes, allowTo('admin'), createUser)
+  .get(protectedRoutes, allowTo('admin'), getAllUsers);
 
 userRouter
   .route('/me')
@@ -39,6 +42,10 @@ userRouter
   .route('/:id/role')
   .patch(protectedRoutes, allowTo('admin'), updateUserRole);
 
-userRouter.route('/:id').get(getUser).put(updateUser).delete(deleteUser);
+userRouter
+  .route('/:id')
+  .get(getUser)
+  .put(updateUser)
+  .delete(protectedRoutes, allowTo('admin'), deleteUser);
 
 export default userRouter;

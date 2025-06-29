@@ -8,6 +8,7 @@ import wishlistRouter from './routes/wishlist.routes.js';
 import { cartRouter } from './routes/cart.routes.js';
 import { orderRouter } from './routes/order.routes.js';
 import adminRouter from './routes/admin.routes.js';
+import rentalRequestRouter from './routes/rentalRequest.routes.js';
 import express from 'express';
 
 const bootstrap = app => {
@@ -26,6 +27,7 @@ const bootstrap = app => {
   apiRouter.use('/cart', cartRouter);
   apiRouter.use('/orders', orderRouter);
   apiRouter.use('/admin', adminRouter);
+  apiRouter.use('/rental-requests', rentalRequestRouter);
   //   app.use("/api/coupons" ,couponRouter)
 };
 

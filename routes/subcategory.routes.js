@@ -10,6 +10,7 @@ import {
   updateSpecificSubCategory,
 } from '../controllers/subcategory.controller.js';
 
+
 const subCategoryRouter = express.Router({ mergeParams: true });
 
 // mergeParams: Allow us to access parameters on other routers

@@ -132,6 +132,36 @@ const createProduct = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Product title is required', 400));
   }
 
+  // Handle rental fields validation
+  if (req.body.isRentable === 'true' || req.body.isRentable === true) {
+    req.body.isRentable = true;
+
+    // Validate rental specific fields
+    if (
+      !req.body.rentalPricePerDay ||
+      parseFloat(req.body.rentalPricePerDay) <= 0
+    ) {
+      return next(
+        new ApiError(
+          'Rental price per day is required for rentable products',
+          400
+        )
+      );
+    }
+
+    // Set rentalStock to regular stock if not provided
+    if (!req.body.rentalStock) {
+      req.body.rentalStock = req.body.stock || 0;
+    }
+
+    // Convert string values to numbers
+    req.body.rentalPricePerDay = parseFloat(req.body.rentalPricePerDay);
+    req.body.rentalDeposit = parseFloat(req.body.rentalDeposit) || 0;
+    req.body.rentalStock = parseInt(req.body.rentalStock) || 0;
+  } else {
+    req.body.isRentable = false;
+  }
+
   const images = [];
   if (req.files) {
     if (req.files.images) {
@@ -166,7 +196,35 @@ const updateProduct = asyncHandler(async (req, res, next) => {
     return next(new ApiError(`No product found with ID: ${id}`, 404));
   }
 
-  // No slug needed anymore
+  // Handle rental fields validation
+  if (req.body.isRentable === 'true' || req.body.isRentable === true) {
+    req.body.isRentable = true;
+
+    // Validate rental specific fields
+    if (req.body.rentalPricePerDay !== undefined) {
+      if (
+        !req.body.rentalPricePerDay ||
+        parseFloat(req.body.rentalPricePerDay) <= 0
+      ) {
+        return next(
+          new ApiError('Rental price per day must be greater than 0', 400)
+        );
+      }
+      req.body.rentalPricePerDay = parseFloat(req.body.rentalPricePerDay);
+    }
+
+    // Handle rental deposit
+    if (req.body.rentalDeposit !== undefined) {
+      req.body.rentalDeposit = parseFloat(req.body.rentalDeposit) || 0;
+    }
+
+    // Handle rental stock
+    if (req.body.rentalStock !== undefined) {
+      req.body.rentalStock = parseInt(req.body.rentalStock) || 0;
+    }
+  } else if (req.body.isRentable === 'false' || req.body.isRentable === false) {
+    req.body.isRentable = false;
+  }
 
   // Handle image updates only if new files are uploaded
   if (req.files) {
@@ -255,6 +313,72 @@ const getFeaturedProducts = asyncHandler(async (req, res) => {
   res.status(200).json({
     message: 'success',
     results: products.length,
+    data: products,
+  });
+});
+
+// @desc     Get rentable products
+// @route    GET /api/v1/products/rentable
+// @access   Public
+const getRentableProducts = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 12;
+  const skip = (page - 1) * limit;
+
+  // Build filter
+  const filter = {
+    isRentable: true,
+    availableForRental: true,
+    rentalStock: { $gt: 0 },
+  };
+
+  // Add category filter if provided
+  if (req.query.category) {
+    filter.category = req.query.category;
+  }
+
+  // Add price range filter
+  if (req.query.minPrice || req.query.maxPrice) {
+    const priceFilter = {};
+    if (req.query.minPrice) {
+      priceFilter.$gte = parseFloat(req.query.minPrice);
+    }
+    if (req.query.maxPrice) {
+      priceFilter.$lte = parseFloat(req.query.maxPrice);
+    }
+    filter.rentalPricePerDay = priceFilter;
+  }
+
+  // Search functionality
+  if (req.query.search) {
+    const searchTerm = req.query.search;
+    filter.$or = [
+      { title: { $regex: searchTerm, $options: 'i' } },
+      { description: { $regex: searchTerm, $options: 'i' } },
+    ];
+  }
+
+  const products = await ProductModel.find(filter)
+    .populate({
+      path: 'category',
+      select: 'name',
+    })
+    .populate({
+      path: 'brand',
+      select: 'name',
+    })
+    .sort(req.query.sort || '-createdAt')
+    .skip(skip)
+    .limit(limit);
+
+  const total = await ProductModel.countDocuments(filter);
+
+  res.status(200).json({
+    message: 'success',
+    results: products.length,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
     data: products,
   });
 });
@@ -355,5 +479,6 @@ export {
   deleteProduct,
   getProductsByCategory,
   getFeaturedProducts,
+  getRentableProducts,
   getProductStats,
 };

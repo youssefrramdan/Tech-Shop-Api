@@ -67,13 +67,35 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Rental fields
+    isRentable: {
+      type: Boolean,
+      default: false,
+    },
+    rentalPricePerDay: {
+      type: Number,
+      min: [0, 'Rental price cannot be negative'],
+    },
+    rentalDeposit: {
+      type: Number,
+      min: [0, 'Rental deposit cannot be negative'],
+      default: 0,
+    },
+    availableForRental: {
+      type: Boolean,
+      default: true,
+    },
+    rentalStock: {
+      type: Number,
+      min: [0, 'Rental stock cannot be negative'],
+      default: 0,
+    },
   },
   {
     timestamps: true,
     versionKey: false,
   }
 );
-
 
 // Add text index for search functionality
 productSchema.index({ title: 'text', description: 'text' });

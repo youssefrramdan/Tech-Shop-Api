@@ -7,6 +7,7 @@ import {
   deleteProduct,
   getProductsByCategory,
   getFeaturedProducts,
+  getRentableProducts,
 } from '../controllers/product.controller.js';
 import { protectedRoutes } from '../controllers/auth.controller.js';
 import createUploader from '../middlewares/cloudnairyMiddleware.js';
@@ -16,6 +17,9 @@ const upload = createUploader('products');
 
 // Featured products route (should come before /:id route)
 productRouter.get('/featured', getFeaturedProducts);
+
+// Rentable products route
+productRouter.get('/rentable', getRentableProducts);
 
 // Products by category
 productRouter.get('/category/:categoryId', getProductsByCategory);

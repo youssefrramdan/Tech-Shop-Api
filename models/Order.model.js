@@ -55,3 +55,4 @@ const schema = new mongoose.Schema(
 
 const Order = mongoose.model('Order', schema);
 export default Order;
+
